@@ -1,24 +1,26 @@
-name: Build APK
+[app]
 
-on:
-  workflow_dispatch:
+title = Budget Tracker
+package.name = budgettracker
+package.domain = org.soham
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+source.dir = .
+source.include_exts = py,kv,png,jpg,jpeg,json,ttf
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+version = 1.0
 
-      - name: Build APK
-        uses: digreatbrian/buildozer-action@v2
-        with:
-          workdir: .
-          buildozer_version: stable
+requirements = python3,kivy,pillow
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: budget-tracker-apk
-          path: ./*.apk
+orientation = portrait
+
+fullscreen = 0
+
+android.api = 33
+android.minapi = 21
+android.sdk = 33
+android.ndk = 25b
+
+[buildozer]
+
+log_level = 2
+warn_on_root = 1
