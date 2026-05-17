@@ -9,7 +9,7 @@ source.include_exts = py,kv,png,jpg,jpeg,json,ttf
 
 version = 1.0
 
-requirements = python3==3.11,kivy==2.3.0,pillow
+requirements = python3,kivy==2.3.0,pillow
 
 orientation = portrait
 
@@ -20,6 +20,9 @@ android.minapi = 21
 android.sdk = 31
 android.ndk = 25b
 android.accept_sdk_license = True
+
+p4a.branch = develop
+p4a.local_recipes =
 
 [buildozer]
 
