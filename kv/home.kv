@@ -1,0 +1,590 @@
+#:kivy 2.0
+#:import CategoryBar components.category_bar
+#:import RecentExpenseRow components.recent_expense_row
+
+# ── Floating action button ────────────────────────────────────────────────────
+# Pinned size + circular guarantee: width == height enforced in class def so no
+# instance can stretch it. Canvas is intentionally minimal — just one soft glow
+# and one solid disc. (Earlier the FAB had a 4th "highlight cap" ellipse drawn
+# at 82% height which made the disc look ovular/two-tone.)
+<FABButton@Button>:
+    background_normal: ''
+    background_down: ''
+    background_color: 0, 0, 0, 0
+    color: 1, 1, 1, 1
+    font_size: sp(30)
+    bold: True
+    size_hint: None, None
+    size: dp(60), dp(60)
+    canvas.before:
+        Color:
+            rgba: 0.62, 0.50, 0.96, 0.20
+        Ellipse:
+            pos: self.x - dp(6), self.y - dp(6)
+            size: self.width + dp(12), self.height + dp(12)
+        Color:
+            rgba: (0.34, 0.26, 0.68, 1) if self.state == 'down' else (0.49, 0.39, 0.86, 1)
+        Ellipse:
+            pos: self.pos
+            size: self.size
+
+# ── Progress bar ──────────────────────────────────────────────────────────────
+<BudgetProgressBar@Widget>:
+    ratio: 0.0
+    over: False
+    canvas.before:
+        Color:
+            rgba: 0.14, 0.16, 0.26, 1
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [self.height / 2]
+        Color:
+            rgba: (0.95, 0.45, 0.45, 1) if self.over else (0.62, 0.50, 0.96, 1)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.width * self.ratio, self.height
+            radius: [self.height / 2]
+
+# ── Category spending row (compact: name | bar | amount) ──────────────────────
+<CategoryBar>:
+    cat_name: ''
+    cat_amount: ''
+    cat_color: [0.5, 0.5, 0.5, 1]
+    bar_ratio: 0.0
+    over_budget: False
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(28)
+    spacing: dp(10)
+
+    Label:
+        markup: True
+        text: '[font=MaterialIcons][color=' + ('{:02x}{:02x}{:02x}'.format(int(root.cat_color[0]*255), int(root.cat_color[1]*255), int(root.cat_color[2]*255))) + ']' + icon_for_category(root.cat_name) + '[/color][/font]  ' + root.cat_name
+        font_size: sp(13)
+        color: 0.86, 0.87, 0.92, 1
+        halign: 'left'
+        valign: 'middle'
+        text_size: self.size
+        size_hint_x: None
+        width: dp(102)
+
+    Widget:
+        size_hint_y: None
+        height: dp(6)
+        pos_hint: {'center_y': 0.5}
+        canvas.before:
+            Color:
+                rgba: 0.14, 0.16, 0.26, 1
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [self.height / 2]
+            Color:
+                rgba: (0.95, 0.45, 0.45, 1) if root.over_budget else root.cat_color
+            RoundedRectangle:
+                pos: self.pos
+                size: max(self.height, self.width * root.bar_ratio) if root.bar_ratio > 0 else 0, self.height
+                radius: [self.height / 2]
+
+    Label:
+        text: root.cat_amount
+        font_size: sp(13)
+        bold: True
+        color: (0.95, 0.50, 0.50, 1) if root.over_budget else (0.94, 0.94, 0.98, 1)
+        halign: 'right'
+        valign: 'middle'
+        text_size: self.size
+        size_hint_x: None
+        width: dp(80)
+
+# ── Subscriptions / Recurring dashboard card ──────────────────────────────────
+<SubscriptionsCard@ButtonBehavior+BoxLayout>:
+    total_text: '-'
+    summary_text: ''
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(72)
+    padding: dp(14), dp(12), dp(12), dp(12)
+    spacing: dp(12)
+    canvas.before:
+        Color:
+            rgba: (0.115, 0.130, 0.220, 1) if self.state == 'down' else (0.094, 0.112, 0.196, 1)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(18)]
+
+    # Icon disc (rounded square with strong purple tint)
+    Widget:
+        size_hint: None, None
+        size: dp(44), dp(44)
+        pos_hint: {'center_y': 0.5}
+        canvas.before:
+            Color:
+                rgba: 0.42, 0.32, 0.78, 1
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [dp(13)]
+        Label:
+            font_name: 'MaterialIcons'
+            text: ''   # sync
+            font_size: sp(22)
+            bold: True
+            color: 1, 1, 1, 1
+            size: self.parent.size
+            pos: self.parent.pos
+            halign: 'center'
+            valign: 'middle'
+            text_size: self.size
+
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(2)
+
+        Label:
+            text: 'Subscriptions'
+            font_size: sp(14)
+            bold: True
+            color: 0.94, 0.94, 0.98, 1
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.size
+
+        Label:
+            text: root.summary_text
+            font_size: sp(11)
+            color: 0.55, 0.57, 0.70, 1
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.size
+
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint_x: None
+        width: dp(96)
+        spacing: dp(2)
+
+        Label:
+            text: root.total_text
+            font_size: sp(15)
+            bold: True
+            color: 0.94, 0.94, 0.98, 1
+            halign: 'right'
+            valign: 'middle'
+            text_size: self.size
+
+        Label:
+            text: 'per month'
+            font_size: sp(10)
+            color: 0.50, 0.52, 0.62, 1
+            halign: 'right'
+            valign: 'middle'
+            text_size: self.size
+
+    Label:
+        font_name: 'MaterialIcons'
+        text: ''
+        size_hint_x: None
+        width: dp(18)
+        font_size: sp(16)
+        color: 0.55, 0.57, 0.70, 1
+        halign: 'right'
+        valign: 'middle'
+        text_size: self.size
+
+
+# ── Recent expense row (flat row, lives inside the Recent card) ───────────────
+<RecentExpenseRow>:
+    exp_category: ''
+    exp_amount: ''
+    exp_note: ''
+    exp_date: ''
+    exp_color: [0.5, 0.5, 0.5, 1]
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(52)
+    spacing: dp(12)
+    padding: dp(4), dp(6), dp(4), dp(6)
+    canvas.before:
+        Color:
+            rgba: (root.exp_color[0], root.exp_color[1], root.exp_color[2], 0.08) if self.state == 'down' else (0, 0, 0, 0)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(10)]
+
+    # Category icon disc — replaces the old thin accent strip with the same
+    # category color encoded as a leading affordance (icon + tinted ellipse).
+    AnchorLayout:
+        size_hint_x: None
+        width: dp(36)
+        anchor_x: 'center'
+        anchor_y: 'center'
+
+        Widget:
+            size_hint: None, None
+            size: dp(32), dp(32)
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            canvas.before:
+                Color:
+                    rgba: root.exp_color[0], root.exp_color[1], root.exp_color[2], 0.18
+                Ellipse:
+                    pos: self.pos
+                    size: self.size
+
+        Label:
+            font_name: 'MaterialIcons'
+            text: icon_for_category(root.exp_category)
+            font_size: sp(15)
+            halign: 'center'
+            valign: 'middle'
+            color: root.exp_color
+            size_hint: None, None
+            size: dp(32), dp(32)
+            text_size: self.size
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(2)
+
+        Label:
+            text: root.exp_category
+            font_size: sp(14)
+            bold: True
+            color: 0.94, 0.94, 0.98, 1
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.size
+
+        Label:
+            text: (root.exp_note + '  ·  ' + root.exp_date) if root.exp_note else root.exp_date
+            font_size: sp(11)
+            color: 0.50, 0.52, 0.62, 1
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.size
+
+    Label:
+        text: root.exp_amount
+        font_size: sp(15)
+        bold: True
+        color: 0.94, 0.94, 0.98, 1
+        halign: 'right'
+        valign: 'middle'
+        text_size: self.size
+        size_hint_x: None
+        width: dp(96)
+
+    Label:
+        font_name: 'MaterialIcons'
+        text: ''
+        size_hint_x: None
+        width: dp(18)
+        font_size: sp(16)
+        color: 0.55, 0.57, 0.70, 1
+        halign: 'right'
+        valign: 'middle'
+        text_size: self.size
+
+
+# ── Home screen ───────────────────────────────────────────────────────────────
+<HomeScreen>:
+    canvas.before:
+        Color:
+            rgba: 0.035, 0.048, 0.118, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        # ── App bar ───────────────────────────────────────────────────────────
+        ScreenHeader:
+            HeaderTitle:
+                text: 'Dashboard'
+
+        # ── Scrollable content + floating FAB ────────────────────────────────
+        FloatLayout:
+
+            ScrollView:
+                id: home_scroll
+                do_scroll_x: False
+                bar_width: 0
+                size_hint: 1, 1
+                # FloatLayout only repositions children that have a
+                # pos_hint. Without this, size_hint:1,1 makes the
+                # ScrollView the right *size* but leaves its pos at
+                # (0, 0) — overlapping the navbar at the bottom and
+                # leaving a navbar-height gap below the app bar.
+                pos_hint: {'x': 0, 'y': 0}
+
+                BoxLayout:
+                    id: scroll_content
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    # BoxLayout sums children + spacing + padding for us; no
+                    # manual height bookkeeping needed.
+                    height: self.minimum_height
+                    # Matches Calendar's scroll-content rhythm: dp(16) sides,
+                    # dp(4) top safe gap, dp(14) inter-section spacing. Bottom
+                    # padding clears the FAB (dp(60) + dp(24) lift + ~dp(24)
+                    # breathing room) so the last row never tucks under it.
+                    padding: dp(16), dp(4), dp(16), dp(108)
+                    spacing: dp(14)
+
+                    # ── HERO: Budget overview card ────────────────────────────
+                    BoxLayout:
+                        id: hero_card
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: self.minimum_height
+                        padding: dp(20), dp(12), dp(18), dp(14)
+                        spacing: dp(8)
+                        canvas.before:
+                            Color:
+                                rgba: 0.094, 0.108, 0.180, 1
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [dp(22)]
+
+                        # Row 1: Month  |  Left pill.
+                        # Both children are top-anchored so the empty card
+                        # background within this row sits *below* the labels
+                        # (where the pill's amount visually fills it),
+                        # eliminating the "floaty" gap that valign:'middle'
+                        # used to create above MAY 2026.
+                        BoxLayout:
+                            size_hint_y: None
+                            height: dp(54)
+
+                            Label:
+                                id: month_label
+                                text: ''
+                                font_size: sp(11)
+                                bold: True
+                                color: 0.50, 0.52, 0.62, 1
+                                halign: 'left'
+                                valign: 'top'
+                                text_size: self.size
+                                padding: 0, dp(8)
+
+                            BoxLayout:
+                                orientation: 'vertical'
+                                size_hint: None, None
+                                width: dp(118)
+                                height: dp(54)
+                                pos_hint: {'top': 1}
+                                padding: dp(14), dp(8)
+                                spacing: dp(2)
+                                canvas.before:
+                                    Color:
+                                        rgba: 0.20, 0.17, 0.42, 0.70
+                                    RoundedRectangle:
+                                        pos: self.pos
+                                        size: self.size
+                                        radius: [dp(14)]
+
+                                Label:
+                                    id: remaining_title
+                                    text: 'Left'
+                                    font_size: sp(11)
+                                    color: 0.72, 0.74, 0.88, 1
+                                    halign: 'center'
+                                    valign: 'middle'
+                                    text_size: self.size
+                                    size_hint_y: None
+                                    height: dp(14)
+
+                                Label:
+                                    id: remaining_amount
+                                    text: '-'
+                                    font_size: sp(15)
+                                    bold: True
+                                    color: 0.42, 0.85, 0.55, 1
+                                    halign: 'center'
+                                    valign: 'middle'
+                                    text_size: self.size
+
+                        Label:
+                            id: spent_label
+                            text: '-'
+                            font_size: sp(34)
+                            bold: True
+                            color: 1, 1, 1, 1
+                            size_hint_y: None
+                            height: dp(40)
+                            halign: 'left'
+                            valign: 'middle'
+                            text_size: self.size
+
+                        Label:
+                            id: income_label
+                            text: ''
+                            font_size: sp(12)
+                            color: 0.50, 0.52, 0.62, 1
+                            size_hint_y: None
+                            height: dp(16)
+                            halign: 'left'
+                            valign: 'top'
+                            text_size: self.size
+
+                        BudgetProgressBar:
+                            id: budget_progress
+                            size_hint_y: None
+                            height: dp(7)
+
+                        BoxLayout:
+                            size_hint_y: None
+                            height: dp(22)
+                            spacing: dp(8)
+
+                            Widget:
+                                size_hint: None, None
+                                size: dp(8), dp(8)
+                                pos_hint: {'center_y': 0.5}
+                                canvas.before:
+                                    Color:
+                                        rgba: 0.42, 0.82, 0.52, 1
+                                    Ellipse:
+                                        pos: self.pos
+                                        size: self.size
+
+                            Label:
+                                id: insight_label
+                                text: ''
+                                font_size: sp(12)
+                                color: 0.72, 0.74, 0.84, 1
+                                halign: 'left'
+                                valign: 'middle'
+                                text_size: self.size
+
+                    # ── Alerts container ──────────────────────────────────────
+                    # Detached from scroll_content by Python when empty so the
+                    # parent's dp(12) spacing doesn't leak a phantom gap.
+                    BoxLayout:
+                        id: intel_strip
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: self.minimum_height
+                        spacing: dp(8)
+
+                    # ── Subscriptions card (detached when no recurring) ───────
+                    SubscriptionsCard:
+                        id: subs_card
+                        on_release: app.go_to('subscriptions')
+
+                    # ── Spending by Category card ─────────────────────────────
+                    BoxLayout:
+                        id: categories_card
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: self.minimum_height
+                        padding: dp(18), dp(16), dp(18), dp(16)
+                        spacing: dp(10)
+                        canvas.before:
+                            Color:
+                                rgba: 0.094, 0.108, 0.180, 1
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [dp(20)]
+
+                        Label:
+                            text: 'SPENDING BY CATEGORY'
+                            font_size: sp(11)
+                            bold: True
+                            color: 0.50, 0.52, 0.62, 1
+                            size_hint_y: None
+                            height: dp(18)
+                            halign: 'left'
+                            valign: 'middle'
+                            text_size: self.size
+
+                        BoxLayout:
+                            id: category_bars
+                            orientation: 'vertical'
+                            size_hint_y: None
+                            height: self.minimum_height
+                            spacing: dp(8)
+
+                    # ── Recent transactions card ──────────────────────────────
+                    BoxLayout:
+                        id: recent_card
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: self.minimum_height
+                        padding: dp(14), dp(14), dp(14), dp(10)
+                        spacing: dp(6)
+                        canvas.before:
+                            Color:
+                                rgba: 0.094, 0.108, 0.180, 1
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [dp(20)]
+
+                        BoxLayout:
+                            size_hint_y: None
+                            height: dp(28)
+                            padding: dp(4), 0
+
+                            Label:
+                                text: 'RECENT'
+                                font_size: sp(11)
+                                bold: True
+                                color: 0.50, 0.52, 0.62, 1
+                                halign: 'left'
+                                valign: 'middle'
+                                text_size: self.size
+
+                            Button:
+                                text: 'See All'
+                                size_hint_x: None
+                                width: dp(70)
+                                background_normal: ''
+                                background_color: 0, 0, 0, 0
+                                color: 0.78, 0.80, 0.95, 1
+                                font_size: sp(12)
+                                bold: True
+                                on_press: app.go_to('history')
+
+                        BoxLayout:
+                            id: recent_list
+                            orientation: 'vertical'
+                            size_hint_y: None
+                            height: self.minimum_height
+                            spacing: dp(0)
+
+                        # Goal alert — detached from recent_card by Python when
+                        # there's no urgent goal, so the dp(6) spacing doesn't
+                        # leak a phantom gap below the last expense row.
+                        Label:
+                            id: goal_alert_label
+                            text: ''
+                            font_size: sp(11)
+                            bold: True
+                            color: 0.95, 0.80, 0.45, 1
+                            size_hint_y: None
+                            height: dp(24)
+                            halign: 'left'
+                            valign: 'middle'
+                            text_size: self.size
+
+            # ── Floating + (FAB) — overlay sibling of ScrollView ──────────────
+            # Sibling of the ScrollView inside FloatLayout so it never enters
+            # the scroll flow. Pos binds to FloatLayout right/y so the FAB
+            # tracks parent size on resize but never moves with scroll.
+            FABButton:
+                text: '+'
+                pos: self.parent.right - self.width - dp(20), self.parent.y + dp(24)
+                on_press: app.go_to('add_expense')
+
+        # ── Bottom nav ────────────────────────────────────────────────────────
+        NavBar:
+            size_hint_y: None
+            height: dp(72)

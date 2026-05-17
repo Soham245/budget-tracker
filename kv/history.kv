@@ -1,0 +1,796 @@
+#:kivy 2.0
+#:import ExpenseItem components.expense_item
+#:import CategoryBar components.category_bar
+#:import CategoryChip components.category_chip
+#:import DateGroupHeader screens.history
+#:import DetailActionButton screens.expense_detail
+
+
+# ── Date group header ─────────────────────────────────────────────────────────
+<DateGroupHeader>:
+    label_text: ''
+    total_text: ''
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(34)
+    padding: 0, dp(10), 0, dp(6)
+
+    Label:
+        text: root.label_text
+        font_size: sp(12)
+        bold: True
+        color: 0.55, 0.57, 0.70, 1
+        halign: 'left'
+        valign: 'middle'
+        text_size: self.size
+
+    Label:
+        text: root.total_text
+        font_size: sp(12)
+        color: 0.42, 0.44, 0.55, 1
+        halign: 'right'
+        valign: 'middle'
+        text_size: self.size
+
+# ConfirmPopup rule now lives in design_system.kv (modal system section).
+
+# ── Edit expense (full-screen modal) ─────────────────────────────────────────
+# Visually identical to AddExpenseScreen — same chrome, same field surfaces,
+# same spacing rhythm, same buttons. The only additions on top of Add are:
+#   • title is "Edit Expense" (not "Add Expense")
+#   • a Pause/Resume + Stop Recurring row inside the collapsible interval
+#     block, shown only when editing an existing recurring expense
+#     (was_recurring=True)
+#   • CTA reads "Save Changes" and calls root.save()
+# Everything else — header, amount card, category grid, note field, date row,
+# recurring toggle, segmented unit picker — is the exact AddExpenseScreen
+# composition so the two screens read as one family.
+<EditExpensePopup>:
+    size_hint: 1, 1
+    # Note: ModalView's `background` is set to a transparent PNG in __init__
+    # so Kivy's default gray BorderImage chrome doesn't multiply against and
+    # darken our fill. The actual navy page color is painted directly by the
+    # BoxLayout below via canvas.before — same approach used by every Screen
+    # in the app (Home, Calendar, Subscription Detail).
+
+    BoxLayout:
+        orientation: 'vertical'
+        canvas.before:
+            Color:
+                rgba: 0.06, 0.07, 0.12, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        # ── App bar (matches Add Expense exactly) ────────────────────────────
+        ScreenHeader:
+            padding: dp(22), dp(6), dp(22), dp(6)
+            BackButton:
+                on_press: root.dismiss()
+            HeaderTitle:
+                text: 'Edit Expense'
+
+        # ── Scrollable form ──────────────────────────────────────────────────
+        ScrollView:
+            do_scroll_x: False
+            bar_width: 0
+
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                padding: dp(22), dp(10), dp(22), dp(28)
+                spacing: dp(13)
+
+                # Amount ──────────────────────────────────────────────────────
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    spacing: dp(10)
+
+                    Label:
+                        text: 'AMOUNT'
+                        font_size: sp(11)
+                        bold: True
+                        color: 0.75, 0.77, 0.95, 0.55
+                        size_hint_y: None
+                        height: dp(18)
+                        halign: 'left'
+                        text_size: self.size
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(80)
+                        padding: dp(16), 0
+                        canvas.before:
+                            Color:
+                                rgba: 0.096, 0.110, 0.190, 1
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [dp(16)]
+
+                        Label:
+                            text: root.currency_symbol
+                            font_size: sp(32)
+                            bold: True
+                            color: 0.75, 0.77, 0.95, 1
+                            size_hint_x: None
+                            width: dp(40)
+
+                        TextInput:
+                            id: amount_input
+                            hint_text: '0.00'
+                            font_size: sp(36)
+                            bold: True
+                            input_type: 'number'
+                            input_filter: 'float'
+                            multiline: False
+                            background_normal: ''
+                            background_active: ''
+                            background_color: 0, 0, 0, 0
+                            foreground_color: 1, 1, 1, 1
+                            hint_text_color: 0.28, 0.28, 0.38, 1
+                            cursor_color: 0.75, 0.77, 0.95, 1
+                            padding: dp(0), dp(18)
+
+                # Category ────────────────────────────────────────────────────
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    spacing: dp(10)
+
+                    Label:
+                        text: 'CATEGORY'
+                        font_size: sp(11)
+                        bold: True
+                        color: 0.75, 0.77, 0.95, 0.55
+                        size_hint_y: None
+                        height: dp(18)
+                        halign: 'left'
+                        text_size: self.size
+
+                    GridLayout:
+                        id: category_grid
+                        cols: 3
+                        size_hint_y: None
+                        height: self.minimum_height
+                        spacing: dp(10)
+
+                # Note ────────────────────────────────────────────────────────
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    spacing: dp(10)
+
+                    Label:
+                        text: 'NOTE  (OPTIONAL)'
+                        font_size: sp(11)
+                        bold: True
+                        color: 0.75, 0.77, 0.95, 0.55
+                        size_hint_y: None
+                        height: dp(18)
+                        halign: 'left'
+                        text_size: self.size
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(52)
+                        padding: dp(16), 0
+                        canvas.before:
+                            Color:
+                                rgba: 0.096, 0.110, 0.190, 1
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [dp(16)]
+
+                        TextInput:
+                            id: note_input
+                            hint_text: 'What was this for?'
+                            font_size: sp(16)
+                            multiline: False
+                            background_normal: ''
+                            background_active: ''
+                            background_color: 0, 0, 0, 0
+                            foreground_color: 0.92, 0.92, 0.97, 1
+                            hint_text_color: 0.28, 0.28, 0.38, 1
+                            cursor_color: 0.75, 0.77, 0.95, 1
+                            padding: dp(0), dp(14)
+
+                # Date ────────────────────────────────────────────────────────
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    spacing: dp(10)
+
+                    Label:
+                        text: 'DATE'
+                        font_size: sp(11)
+                        bold: True
+                        color: 0.75, 0.77, 0.95, 0.55
+                        size_hint_y: None
+                        height: dp(18)
+                        halign: 'left'
+                        text_size: self.size
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(52)
+                        spacing: dp(10)
+
+                        NavArrowButton:
+                            arrow: '‹'
+                            size: dp(52), dp(52)
+                            on_press: root.prev_day()
+
+                        Label:
+                            text: root.selected_date_display
+                            font_size: sp(14)
+                            bold: True
+                            color: 0.92, 0.92, 0.97, 1
+                            halign: 'center'
+                            valign: 'middle'
+                            text_size: self.size
+                            canvas.before:
+                                Color:
+                                    rgba: 0.096, 0.110, 0.190, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(12)]
+
+                        NavArrowButton:
+                            arrow: '›'
+                            size: dp(52), dp(52)
+                            on_press: root.next_day()
+
+                # Recurring ───────────────────────────────────────────────────
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    spacing: dp(10)
+
+                    Label:
+                        text: 'RECURRING'
+                        font_size: sp(11)
+                        bold: True
+                        color: 0.75, 0.77, 0.95, 0.55
+                        size_hint_y: None
+                        height: dp(18)
+                        halign: 'left'
+                        text_size: self.size
+
+                    ToggleRow:
+                        size_hint_y: None
+                        height: dp(52)
+                        padding: dp(20), 0
+                        active: root.is_recurring
+                        on_active: root.on_edit_toggle_changed(self.active)
+                        canvas.before:
+                            Color:
+                                rgba: 0.096, 0.110, 0.190, 1
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [dp(16)]
+                        Label:
+                            text: 'Repeat this expense'
+                            font_size: sp(15)
+                            color: 0.9, 0.9, 0.95, 1
+                            halign: 'left'
+                            text_size: self.size
+                            valign: 'middle'
+                        RecurringToggle:
+                            active: root.is_recurring
+                            pos_hint: {'center_y': 0.5}
+
+                    # Collapsible interval block (mirrors Add Expense)
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: self.minimum_height if root.is_recurring else 0
+                        opacity: 1 if root.is_recurring else 0
+                        disabled: not root.is_recurring
+                        spacing: dp(10)
+
+                        Label:
+                            text: 'REPEAT EVERY'
+                            font_size: sp(11)
+                            color: 0.75, 0.77, 0.95, 0.55
+                            size_hint_y: None
+                            height: dp(16)
+                            halign: 'left'
+                            text_size: self.size
+
+                        BoxLayout:
+                            size_hint_y: None
+                            height: dp(44)
+                            spacing: dp(10)
+
+                            BoxLayout:
+                                size_hint_x: None
+                                width: dp(64)
+                                canvas.before:
+                                    Color:
+                                        rgba: 0.096, 0.110, 0.190, 1
+                                    RoundedRectangle:
+                                        pos: self.pos
+                                        size: self.size
+                                        radius: [dp(12)]
+                                TextInput:
+                                    id: edit_recur_value_input
+                                    hint_text: '1'
+                                    font_size: sp(16)
+                                    input_filter: 'int'
+                                    multiline: False
+                                    background_normal: ''
+                                    background_active: ''
+                                    background_color: 0, 0, 0, 0
+                                    foreground_color: 0.92, 0.92, 0.97, 1
+                                    hint_text_color: 0.28, 0.28, 0.38, 1
+                                    cursor_color: 0.75, 0.77, 0.95, 1
+                                    padding: dp(12), dp(12)
+                                    halign: 'center'
+                                    disabled: not root.is_recurring
+                                    on_text: root.set_edit_recur_value(self.text)
+
+                            RoundedButton:
+                                text: 'Day'
+                                fill_color: (0.75, 0.77, 0.95, 1) if root.recur_unit_val == 'day' else (0.16, 0.18, 0.28, 1)
+                                color: (0.08, 0.08, 0.18, 1) if root.recur_unit_val == 'day' else (0.7, 0.7, 0.8, 1)
+                                bold: root.recur_unit_val == 'day'
+                                on_press: root.set_edit_recur_unit('day')
+
+                            RoundedButton:
+                                text: 'Month'
+                                fill_color: (0.75, 0.77, 0.95, 1) if root.recur_unit_val == 'month' else (0.16, 0.18, 0.28, 1)
+                                color: (0.08, 0.08, 0.18, 1) if root.recur_unit_val == 'month' else (0.7, 0.7, 0.8, 1)
+                                bold: root.recur_unit_val == 'month'
+                                on_press: root.set_edit_recur_unit('month')
+
+                            RoundedButton:
+                                text: 'Year'
+                                fill_color: (0.75, 0.77, 0.95, 1) if root.recur_unit_val == 'year' else (0.16, 0.18, 0.28, 1)
+                                color: (0.08, 0.08, 0.18, 1) if root.recur_unit_val == 'year' else (0.7, 0.7, 0.8, 1)
+                                bold: root.recur_unit_val == 'year'
+                                on_press: root.set_edit_recur_unit('year')
+
+                        Label:
+                            text: root.recur_preview
+                            font_size: sp(12)
+                            color: 0.75, 0.77, 0.95, 0.8
+                            size_hint_y: None
+                            height: dp(22)
+                            halign: 'left'
+                            text_size: self.size
+                            valign: 'middle'
+
+                        # Pause / Stop controls (only when editing an existing
+                        # recurring expense — was_recurring=True). Uses the
+                        # exact same DetailActionButton component as the
+                        # Subscription Detail screen's bottom action row so
+                        # the two screens feel like one family: vertical
+                        # icon-on-top, label-below chrome, soft tinted fill.
+                        # Resume/Pause flips to green/amber; Stop is red.
+                        BoxLayout:
+                            size_hint_y: None
+                            height: dp(72) if root.was_recurring else 0
+                            opacity: 1 if root.was_recurring else 0
+                            disabled: not root.was_recurring
+                            spacing: dp(10)
+
+                            DetailActionButton:
+                                icon: ('' if root.recur_paused else '')
+                                label: 'Resume' if root.recur_paused else 'Pause'
+                                tint: (0.48, 0.82, 0.58, 1) if root.recur_paused else (0.95, 0.78, 0.45, 1)
+                                fill_alpha: 0.14
+                                on_release: root.toggle_pause()
+
+                            DetailActionButton:
+                                icon: ''
+                                label: 'Stop Recurring'
+                                tint: 0.92, 0.42, 0.42, 1
+                                fill_alpha: 0.22
+                                on_release: root.stop_recurring()
+
+                # Error
+                Label:
+                    id: error_label
+                    text: ''
+                    color: 0.92, 0.5, 0.5, 1
+                    font_size: sp(13)
+                    size_hint_y: None
+                    height: dp(24) if self.text else 0
+
+                # Save CTA — same PrimaryButton chrome as Add Expense.
+                PrimaryButton:
+                    text: 'Save Changes'
+                    font_size: sp(16)
+                    size_hint_y: None
+                    height: dp(54)
+                    on_press: root.save()
+
+
+# ── Category chip ─────────────────────────────────────────────────────────────
+# Color-coded capsule pill — soft tinted background, colored outline, colored
+# icon + text. Selected state intensifies all three bands. Width auto-derives
+# from the icon + text texture widths so long category names stay balanced.
+<CategoryChip>:
+    orientation: 'horizontal'
+    size_hint: None, None
+    height: dp(36)
+    width: self.minimum_width
+    padding: dp(14), 0, dp(14), 0
+    spacing: dp(8)
+    # Two states only — both filled, no outline, no glow. Unselected mixes the
+    # category accent into the dark base at ~22 % for a subtle tinted card;
+    # selected uses the full accent. One RoundedRectangle, nothing else.
+    canvas.before:
+        Color:
+            rgba:
+                (self.accent[0], self.accent[1], self.accent[2], 1) if self.active else \
+                (self.accent[0] * 0.22 + 0.07, self.accent[1] * 0.22 + 0.075, self.accent[2] * 0.22 + 0.10, 1)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [self.height / 2]
+
+    # Icon and text share a fixed dp(22) vertical band with center valign so
+    # their visual midpoints line up exactly regardless of MaterialIcons vs
+    # Roboto bearings. Width still hugs texture so the chip auto-sizes.
+    Label:
+        font_name: 'MaterialIcons'
+        text: root.icon
+        font_size: sp(16)
+        halign: 'center'
+        valign: 'middle'
+        # Bright: dark glyph on the saturated fill. Dim: full-saturation accent
+        # glyph on the dark tinted fill (keeps category identity readable).
+        color: (0.10, 0.10, 0.18, 1) if root.active else (root.accent[0], root.accent[1], root.accent[2], 1)
+        size_hint: None, None
+        height: dp(22)
+        width: self.texture_size[0]
+        text_size: None, dp(22)
+        pos_hint: {'center_y': 0.5}
+
+    Label:
+        text: root.text
+        font_size: sp(13)
+        bold: root.active
+        halign: 'center'
+        valign: 'middle'
+        color: (0.10, 0.10, 0.18, 1) if root.active else (root.accent[0], root.accent[1], root.accent[2], 1)
+        size_hint: None, None
+        height: dp(22)
+        width: self.texture_size[0]
+        text_size: None, dp(22)
+        pos_hint: {'center_y': 0.5}
+
+
+# ── Expense list row ──────────────────────────────────────────────────────────
+<ExpenseItem>:
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(64)
+    spacing: dp(12)
+    padding: dp(14), dp(10)
+    canvas.before:
+        # Press-state overlay: darken slightly when held
+        Color:
+            rgba: (0.13, 0.15, 0.24, 1) if self.state == 'down' else (0.106, 0.122, 0.2, 1)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(14)]
+        # Subtle accent-tinted border when pressed
+        Color:
+            rgba: (self.cat_color[0], self.cat_color[1], self.cat_color[2], 0.35) if self.state == 'down' else (0, 0, 0, 0)
+        Line:
+            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(14))
+            width: 1.2
+
+    # Category icon disc - replaces the old thin accent strip with the same
+    # category color encoded as a leading affordance, matching the reference
+    # design's icon-led rows. Bg uses cat_color at 0.18 alpha; glyph at full.
+    AnchorLayout:
+        size_hint_x: None
+        width: dp(40)
+        anchor_x: 'center'
+        anchor_y: 'center'
+
+        Widget:
+            size_hint: None, None
+            size: dp(36), dp(36)
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            canvas.before:
+                Color:
+                    rgba: root.cat_color[0], root.cat_color[1], root.cat_color[2], 0.18
+                Ellipse:
+                    pos: self.pos
+                    size: self.size
+
+        Label:
+            font_name: 'MaterialIcons'
+            text: icon_for_category(root.category)
+            font_size: sp(17)
+            halign: 'center'
+            valign: 'middle'
+            color: root.cat_color
+            size_hint: None, None
+            size: dp(36), dp(36)
+            text_size: self.size
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(3)
+
+        # Title row: optional recurring badge + category name
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: dp(6) if root.is_recurring else 0
+
+            Label:
+                font_name: 'MaterialIcons'
+                text: ''   # repeat
+                font_size: sp(13)
+                color: 0.75, 0.77, 0.95, 0.8
+                size_hint_x: None
+                width: self.texture_size[0] if root.is_recurring else 0
+                opacity: 1 if root.is_recurring else 0
+                halign: 'left'
+                valign: 'middle'
+
+            Label:
+                text: root.category
+                font_size: sp(14)
+                bold: True
+                color: 0.92, 0.92, 0.97, 1
+                halign: 'left'
+                text_size: self.size
+                valign: 'middle'
+
+        Label:
+            text: (root.note + '  ·  ' + root.date_display) if root.note and root.date_display else (root.note or root.date_display)
+            font_size: sp(11)
+            color: 0.5, 0.5, 0.62, 1
+            halign: 'left'
+            text_size: self.size
+            valign: 'middle'
+
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint_x: None
+        width: dp(118)
+        spacing: dp(6)
+
+        Label:
+            text: root.amount
+            font_size: sp(15)
+            bold: True
+            color: 0.75, 0.77, 0.95, 1
+            halign: 'right'
+            text_size: self.size
+            valign: 'middle'
+
+        # Chevron — subtle affordance that the row opens a detail page
+        Label:
+            font_name: 'MaterialIcons'
+            text: ''
+            size_hint_x: None
+            width: dp(18)
+            font_size: sp(16)
+            color: 0.55, 0.57, 0.7, 1
+            halign: 'right'
+            text_size: self.size
+            valign: 'middle'
+
+
+# ── History Screen ────────────────────────────────────────────────────────────
+<HistoryScreen>:
+    canvas.before:
+        Color:
+            rgba: 0.035, 0.048, 0.118, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        # App bar — History is a drill-down now (reached via Home "See All",
+        # Analytics category taps, etc.), so it carries a BackButton in the
+        # header instead of a NavBar at the bottom. BackButton sits at the
+        # dp(16) gutter, aligning with the month-switcher card and every
+        # card below.
+        ScreenHeader:
+            BackButton:
+                on_press: app.go_to('home')
+            HeaderTitle:
+                text: 'Expense History'
+
+        # Month switcher card (elevated). Layout is [arrow | title-stack | arrow]
+        # horizontally so both arrows align to the visual center of the entire
+        # title+subtitle block (matches the reference). Vertical-then-horizontal
+        # nesting would leave the arrows pinned to just the title row instead.
+        BoxLayout:
+            size_hint_y: None
+            height: dp(82)
+            padding: dp(16), dp(4), dp(16), dp(4)
+
+            BoxLayout:
+                orientation: 'horizontal'
+                padding: dp(10), dp(10), dp(10), dp(10)
+                spacing: dp(10)
+                canvas.before:
+                    Color:
+                        rgba: 0.106, 0.122, 0.2, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(18)]
+
+                NavArrowButton:
+                    arrow: '‹'
+                    on_press: root.prev_month()
+
+                # Centered title + subtitle stack — arrows on either side anchor
+                # to its vertical midpoint via pos_hint center_y on the buttons.
+                BoxLayout:
+                    orientation: 'vertical'
+                    spacing: dp(2)
+
+                    Label:
+                        text: root.month_display
+                        font_size: sp(15)
+                        bold: True
+                        color: 0.94, 0.94, 0.98, 1
+                        halign: 'center'
+                        valign: 'bottom'
+                        text_size: self.size
+
+                    Label:
+                        id: total_label
+                        text: ''
+                        font_size: sp(12)
+                        color: 0.55, 0.57, 0.70, 1
+                        halign: 'center'
+                        valign: 'top'
+                        text_size: self.size
+                        size_hint_y: None
+                        height: dp(20)
+
+                    Label:
+                        id: count_label
+                        text: ''
+                        opacity: 0
+                        size_hint_y: None
+                        height: 0
+
+                NavArrowButton:
+                    arrow: '›'
+                    disabled: root.is_current_month
+                    on_press: root.next_month()
+
+        # Search bar
+        BoxLayout:
+            size_hint_y: None
+            height: dp(46)
+            padding: dp(16), dp(2), dp(16), dp(4)
+
+            BoxLayout:
+                canvas.before:
+                    Color:
+                        rgba: 0.106, 0.122, 0.2, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(14)]
+
+                Label:
+                    font_name: 'MaterialIcons'
+                    text: '\ue8b6'
+                    font_size: sp(18)
+                    color: 0.45, 0.47, 0.6, 1
+                    size_hint_x: None
+                    width: dp(36)
+                    halign: 'center'
+
+                TextInput:
+                    id: search_input
+                    hint_text: 'Search transactions...'
+                    font_size: sp(13)
+                    multiline: False
+                    background_normal: ''
+                    background_active: ''
+                    background_color: 0, 0, 0, 0
+                    foreground_color: 0.92, 0.92, 0.97, 1
+                    hint_text_color: 0.38, 0.38, 0.48, 1
+                    cursor_color: 0.75, 0.77, 0.95, 1
+                    padding: dp(0), dp(8)
+                    on_text: root.on_search_text(self.text)
+
+        # Filter chips
+        ScrollView:
+            size_hint_y: None
+            height: dp(52)
+            do_scroll_y: False
+            bar_width: 0
+            BoxLayout:
+                id: filter_chips
+                orientation: 'horizontal'
+                size_hint_x: None
+                width: self.minimum_width
+                padding: dp(16), dp(8)
+                spacing: dp(8)
+
+        # Content — RecycleView for the transaction list. Only visible rows
+        # are real widgets; the rest are recycled. RecycleBoxLayout supports
+        # per-row heights (we mix dp(34) date headers with dp(64) expense
+        # rows by including `height` in each data dict).
+        RelativeLayout:
+
+            RecycleView:
+                id: expense_rv
+                do_scroll_x: False
+                bar_width: 0
+                # Tell RV to pull each row's class from the 'viewclass' key in
+                # the data dict. Kivy maintains a separate widget pool per class
+                # so DateGroupHeader and ExpenseItem recycle independently.
+                key_viewclass: 'viewclass'
+                opacity: 0 if root.is_empty_state else 1
+                # Cheap belt-and-suspenders: when empty-state is up the RV is
+                # disabled too, so a stray touch can't end up in a zero-height
+                # scroll viewport.
+                disabled: root.is_empty_state
+
+                RecycleBoxLayout:
+                    orientation: 'vertical'
+                    default_size: None, dp(64)
+                    default_size_hint: 1, None
+                    size_hint_y: None
+                    height: self.minimum_height
+                    spacing: dp(6)
+                    padding: dp(16), dp(6), dp(16), dp(40)
+
+            # Empty-state overlay. Sits on top of the RV area; opacity-swap
+            # avoids restructuring the tree when the dataset goes empty.
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint: 1, None
+                height: dp(72)
+                pos_hint: {'center_x': 0.5, 'top': 0.85}
+                spacing: dp(4)
+                opacity: 1 if root.is_empty_state else 0
+                disabled: not root.is_empty_state
+
+                Label:
+                    text: root.empty_title
+                    font_size: sp(15)
+                    bold: True
+                    color: 0.6, 0.6, 0.7, 1
+                    size_hint_y: None
+                    height: dp(28)
+                    halign: 'center'
+                    valign: 'middle'
+                    text_size: self.size
+
+                Label:
+                    text: root.empty_subtitle
+                    font_size: sp(12)
+                    color: 0.42, 0.42, 0.52, 1
+                    size_hint_y: None
+                    height: dp(20)
+                    halign: 'center'
+                    valign: 'top'
+                    text_size: self.size
+
+        # NavBar intentionally absent — History is a drill-down screen now,
+        # not a root tab. Back navigation lives in the BackButton in the
+        # header at the top of this screen.

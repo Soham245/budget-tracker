@@ -1,0 +1,335 @@
+#:kivy 2.0
+#:import SubscriptionRow screens.subscriptions
+
+# ── Subscription row ──────────────────────────────────────────────────────────
+<SubscriptionRow>:
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(66)
+    spacing: dp(12)
+    padding: dp(14), dp(10), dp(16), dp(10)
+    canvas.before:
+        Color:
+            rgba: (0.13, 0.15, 0.24, 1) if self.state == 'down' else (0.106, 0.122, 0.2, 1)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(14)]
+        Color:
+            rgba: (self.accent_color[0], self.accent_color[1], self.accent_color[2], 0.35) if self.state == 'down' else (0, 0, 0, 0)
+        Line:
+            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(14))
+            width: 1.2
+
+    # Category icon disc (paused state desaturates to neutral grey)
+    AnchorLayout:
+        size_hint_x: None
+        width: dp(40)
+        anchor_x: 'center'
+        anchor_y: 'center'
+
+        Widget:
+            size_hint: None, None
+            size: dp(36), dp(36)
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            canvas.before:
+                Color:
+                    rgba: (0.55, 0.55, 0.65, 0.14) if root.is_paused else (root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.18)
+                Ellipse:
+                    pos: self.pos
+                    size: self.size
+
+        # Always the global subscriptions glyph (MaterialIcons autorenew).
+        # Hard-coded so every row reads as a subscription regardless of the
+        # underlying expense's category — no brand logos, no per-service icons.
+        Label:
+            font_name: 'MaterialIcons'
+            text: chr(0xe863)
+            font_size: sp(18)
+            halign: 'center'
+            valign: 'middle'
+            color: (0.55, 0.55, 0.65, 0.7) if root.is_paused else root.accent_color
+            size_hint: None, None
+            size: dp(36), dp(36)
+            text_size: self.size
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+    # Title + subtitle stack (flex)
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(3)
+
+        Label:
+            text: root.title
+            font_size: sp(14)
+            bold: True
+            color: (0.65, 0.66, 0.74, 1) if root.is_paused else (0.94, 0.94, 0.98, 1)
+            halign: 'left'
+            text_size: self.size
+            valign: 'middle'
+
+        Label:
+            text: root.subtitle
+            font_size: sp(11)
+            color: 0.55, 0.55, 0.65, 1
+            halign: 'left'
+            text_size: self.size
+            valign: 'middle'
+
+    # Right column: amount on top, due-pill below (right-anchored)
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint_x: None
+        width: dp(110)
+        spacing: dp(4)
+
+        Label:
+            text: root.amount_text
+            font_size: sp(14)
+            bold: True
+            color: (0.55, 0.55, 0.65, 1) if root.is_paused else (0.75, 0.77, 0.95, 1)
+            halign: 'right'
+            text_size: self.size
+            valign: 'bottom'
+            size_hint_y: None
+            height: dp(20)
+
+        # Due-pill — Label is its own canvas, sized to its texture (no cycle).
+        AnchorLayout:
+            anchor_x: 'right'
+            anchor_y: 'top'
+            size_hint_y: None
+            height: dp(22)
+
+            Label:
+                text: root.due_text
+                font_size: sp(10)
+                bold: True
+                color:
+                    (0.95, 0.78, 0.45, 1) if root.is_paused else \
+                    (0.92, 0.55, 0.55, 1) if root.is_overdue else \
+                    root.accent_color
+                padding: dp(10), dp(4)
+                size_hint: None, None
+                size: self.texture_size
+                canvas.before:
+                    Color:
+                        rgba:
+                            (0.95, 0.78, 0.45, 0.18) if root.is_paused else \
+                            (0.92, 0.50, 0.50, 0.20) if root.is_overdue else \
+                            (root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.18)
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [self.height / 2]
+
+
+# ── Screen ────────────────────────────────────────────────────────────────────
+<SubscriptionsScreen>:
+    canvas.before:
+        Color:
+            rgba: 0.06, 0.07, 0.12, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        # ── App bar ───────────────────────────────────────────────────────────
+        # Inherits ScreenHeader defaults (dp(14) sides, dp(6) symmetric)
+        # so the header aligns to the global system used by Calendar.
+        ScreenHeader:
+            BackButton:
+                on_press: root.go_back()
+            HeaderTitle:
+                text: 'Subscriptions'
+
+        # ── Scrollable content ────────────────────────────────────────────────
+        ScrollView:
+            do_scroll_x: False
+            bar_width: 0
+
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                padding: dp(16), dp(4), dp(16), dp(40)
+                spacing: dp(14)
+
+                # ── Hero: monthly commitment card ─────────────────────────────
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: dp(22), dp(20)
+                    spacing: dp(6)
+                    canvas.before:
+                        Color:
+                            rgba: 0.106, 0.122, 0.2, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(22)]
+                        Color:
+                            rgba: 0.75, 0.77, 0.95, 0.10
+                        Line:
+                            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(22))
+                            width: 1.2
+
+                    Label:
+                        text: 'MONTHLY COMMITMENT'
+                        font_size: sp(11)
+                        bold: True
+                        color: 0.75, 0.77, 0.95, 0.6
+                        size_hint_y: None
+                        height: dp(18)
+                        halign: 'left'
+                        text_size: self.size
+                        valign: 'middle'
+
+                    Label:
+                        text: root.monthly_total_text
+                        font_size: sp(38)
+                        bold: True
+                        color: 0.96, 0.96, 1, 1
+                        size_hint_y: None
+                        height: dp(50)
+                        halign: 'left'
+                        text_size: self.size
+                        valign: 'middle'
+
+                    Label:
+                        text: root.summary_text
+                        font_size: sp(12)
+                        color: 0.6, 0.61, 0.74, 1
+                        size_hint_y: None
+                        height: dp(18)
+                        halign: 'left'
+                        text_size: self.size
+                        valign: 'middle'
+
+                # ── Empty state ───────────────────────────────────────────────
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: dp(140) if root.is_empty else 0
+                    opacity: 1 if root.is_empty else 0
+                    padding: dp(24), dp(24)
+                    spacing: dp(8)
+                    canvas.before:
+                        Color:
+                            rgba: 0.09, 0.11, 0.18, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(18)]
+
+                    Label:
+                        font_name: 'MaterialIcons'
+                        text: ''   # repeat
+                        font_size: sp(36)
+                        color: 0.55, 0.57, 0.7, 1
+                        size_hint_y: None
+                        height: dp(46)
+                        halign: 'center'
+                        text_size: self.size
+
+                    Label:
+                        text: 'No subscriptions yet'
+                        font_size: sp(14)
+                        bold: True
+                        color: 0.78, 0.79, 0.88, 1
+                        size_hint_y: None
+                        height: dp(22)
+                        halign: 'center'
+                        text_size: self.size
+
+                    Label:
+                        text: 'Add a recurring expense and mark it as a Subscription to track renewals here.'
+                        font_size: sp(12)
+                        color: 0.55, 0.57, 0.7, 1
+                        halign: 'center'
+                        text_size: self.size
+                        valign: 'top'
+
+                # ── Upcoming this week ────────────────────────────────────────
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height if root.has_upcoming else 0
+                    opacity: 1 if root.has_upcoming else 0
+                    spacing: dp(10)
+
+                    Label:
+                        text: 'UPCOMING THIS WEEK'
+                        font_size: sp(11)
+                        bold: True
+                        color: 0.75, 0.77, 0.95, 0.55
+                        size_hint_y: None
+                        height: dp(20)
+                        halign: 'left'
+                        text_size: self.size
+                        valign: 'middle'
+
+                    BoxLayout:
+                        id: upcoming_container
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: 0
+                        spacing: dp(10)
+
+                # ── Active (grouped by category) ──────────────────────────────
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height if root.has_active else 0
+                    opacity: 1 if root.has_active else 0
+                    spacing: dp(10)
+
+                    Label:
+                        text: 'ACTIVE'
+                        font_size: sp(12)
+                        bold: True
+                        # Green success accent (matches design tokens).
+                        color: 0.48, 0.82, 0.58, 0.95
+                        size_hint_y: None
+                        height: dp(22)
+                        halign: 'left'
+                        text_size: self.size
+                        valign: 'middle'
+
+                    BoxLayout:
+                        id: active_container
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: 0
+                        spacing: dp(10)
+
+                # ── Paused ────────────────────────────────────────────────────
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height if root.has_paused else 0
+                    opacity: 1 if root.has_paused else 0
+                    spacing: dp(10)
+
+                    Label:
+                        text: 'PAUSED'
+                        font_size: sp(12)
+                        bold: True
+                        # Muted amber to read as a "soft warn" without competing
+                        # with the ACTIVE green for visual weight.
+                        color: 0.92, 0.74, 0.42, 0.85
+                        size_hint_y: None
+                        height: dp(22)
+                        halign: 'left'
+                        text_size: self.size
+                        valign: 'middle'
+
+                    BoxLayout:
+                        id: paused_container
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: 0
+                        spacing: dp(10)

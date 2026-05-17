@@ -1,0 +1,399 @@
+#:kivy 2.0
+#:import CategoryBudgetRow screens.settings
+
+<CategoryBudgetRow>:
+    # Compact list-item row, no per-row background — the row sits inside the
+    # Category Budgets grouped card and is divider-separated like the
+    # Subscription Detail "Details" card pattern.
+    size_hint_y: None
+    height: dp(52)
+    spacing: dp(12)
+    padding: 0, 0
+
+    # Color dot
+    Widget:
+        size_hint_x: None
+        width: dp(12)
+        canvas.before:
+            Color:
+                rgba: root.dot_color
+            Ellipse:
+                pos: self.x, self.center_y - dp(5)
+                size: dp(10), dp(10)
+
+    # Category name (flexes)
+    Label:
+        text: root.cat_name
+        font_size: sp(14)
+        color: 0.90, 0.91, 0.96, 1
+        halign: 'left'
+        text_size: self.size
+        valign: 'middle'
+
+    # Compact recessed input — uses page-background tone so it reads as a
+    # field carved into the grouped card surface above.
+    BoxLayout:
+        size_hint_x: None
+        width: dp(108)
+        size_hint_y: None
+        height: dp(36)
+        pos_hint: {'center_y': 0.5}
+        canvas.before:
+            Color:
+                rgba: 0.06, 0.07, 0.12, 1
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [dp(10)]
+
+        TextInput:
+            id: budget_input
+            text: root.budget_str
+            hint_text: '0'
+            font_size: sp(14)
+            bold: True
+            input_filter: 'float'
+            multiline: False
+            background_normal: ''
+            background_active: ''
+            background_color: 0, 0, 0, 0
+            foreground_color: 0.94, 0.94, 0.98, 1
+            hint_text_color: 0.34, 0.36, 0.46, 1
+            cursor_color: 0.75, 0.77, 0.95, 1
+            padding: dp(12), dp(8)
+            halign: 'right'
+
+
+<SettingsScreen>:
+    canvas.before:
+        Color:
+            rgba: 0.06, 0.07, 0.12, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        # ── App bar (root tab — no BackButton, reached via bottom navbar) ────
+        ScreenHeader:
+            HeaderTitle:
+                text: 'Settings'
+
+        # ── Scrollable ────────────────────────────────────────────────────────
+        ScrollView:
+            do_scroll_x: False
+            bar_width: 0
+
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                padding: dp(16), dp(4), dp(16), dp(100)
+                spacing: dp(14)
+
+                # ── Monthly Income ────────────────────────────────────────────
+                # Hero card — section label + status feedback in the header row,
+                # recessed amount field with an inline accent Save pill on the
+                # right. Card surface matches Subscription Detail / Edit Expense
+                # exactly (0.096, 0.110, 0.190), no hairline border.
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: dp(18), dp(16), dp(18), dp(18)
+                    spacing: dp(12)
+                    canvas.before:
+                        Color:
+                            rgba: 0.096, 0.110, 0.190, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(18)]
+
+                    # Header row: label + inline feedback (right)
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(18)
+                        Label:
+                            text: 'MONTHLY INCOME'
+                            font_size: sp(11)
+                            bold: True
+                            color: 0.55, 0.57, 0.72, 1
+                            halign: 'left'
+                            valign: 'middle'
+                            text_size: self.size
+                        Label:
+                            id: income_feedback
+                            text: ''
+                            font_size: sp(11)
+                            bold: True
+                            color: 0.50, 0.80, 0.55, 1
+                            halign: 'right'
+                            valign: 'middle'
+                            text_size: self.size
+
+                    # Recessed field + inline Save pill
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(56)
+                        spacing: dp(10)
+
+                        BoxLayout:
+                            canvas.before:
+                                Color:
+                                    rgba: 0.06, 0.07, 0.12, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(14)]
+
+                            TextInput:
+                                id: income_input
+                                hint_text: '0'
+                                font_size: sp(22)
+                                bold: True
+                                input_filter: 'float'
+                                multiline: False
+                                background_normal: ''
+                                background_active: ''
+                                background_color: 0, 0, 0, 0
+                                foreground_color: 0.96, 0.96, 1, 1
+                                hint_text_color: 0.32, 0.34, 0.44, 1
+                                cursor_color: 0.75, 0.77, 0.95, 1
+                                padding: dp(16), dp(14)
+
+                        PrimaryButton:
+                            text: 'Save'
+                            font_size: sp(14)
+                            size_hint_x: None
+                            width: dp(78)
+                            height: dp(56)
+                            on_press: root.save_income()
+
+                # ── Currency ──────────────────────────────────────────────────
+                # Segmented pill row inside a recessed track — modern iOS-style.
+                # Active pill uses the lavender accent (set from Python via
+                # _highlight_currency); inactive pills sit transparent on the
+                # recessed track so the whole control reads as one cohesive
+                # surface.
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: dp(18), dp(16), dp(18), dp(16)
+                    spacing: dp(12)
+                    canvas.before:
+                        Color:
+                            rgba: 0.096, 0.110, 0.190, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(18)]
+
+                    Label:
+                        text: 'CURRENCY'
+                        font_size: sp(11)
+                        bold: True
+                        color: 0.55, 0.57, 0.72, 1
+                        size_hint_y: None
+                        height: dp(16)
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.size
+
+                    # Pills sit directly on the card surface — no recessed
+                    # track behind. Inactive pills carry a subtle page-tone
+                    # fill so they remain visible as distinct pill shapes;
+                    # the active pill takes the full lavender accent.
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(44)
+                        spacing: dp(8)
+
+                        RoundedButton:
+                            id: btn_inr
+                            text: '₹  INR'
+                            fill_color: 0.06, 0.07, 0.12, 1
+                            color: 0.72, 0.74, 0.84, 1
+                            font_size: sp(13)
+                            on_press: root.set_currency('₹')
+
+                        RoundedButton:
+                            id: btn_usd
+                            text: '$  USD'
+                            fill_color: 0.06, 0.07, 0.12, 1
+                            color: 0.72, 0.74, 0.84, 1
+                            font_size: sp(13)
+                            on_press: root.set_currency('$')
+
+                        RoundedButton:
+                            id: btn_eur
+                            text: '€  EUR'
+                            fill_color: 0.06, 0.07, 0.12, 1
+                            color: 0.72, 0.74, 0.84, 1
+                            font_size: sp(13)
+                            on_press: root.set_currency('€')
+
+                        RoundedButton:
+                            id: btn_gbp
+                            text: '£  GBP'
+                            fill_color: 0.06, 0.07, 0.12, 1
+                            color: 0.72, 0.74, 0.84, 1
+                            font_size: sp(13)
+                            on_press: root.set_currency('£')
+
+                # ── Category Budgets ──────────────────────────────────────────
+                # Grouped card with header row, hairline divider, list of
+                # divider-separated CategoryBudgetRow items, and inline footer
+                # with the Save action right-aligned. Mirrors the Subscription
+                # Detail "Details" card pattern exactly.
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: dp(18), dp(14), dp(18), dp(14)
+                    spacing: dp(8)
+                    canvas.before:
+                        Color:
+                            rgba: 0.096, 0.110, 0.190, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(18)]
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(20)
+                        Label:
+                            text: 'CATEGORY BUDGETS'
+                            font_size: sp(11)
+                            bold: True
+                            color: 0.55, 0.57, 0.72, 1
+                            halign: 'left'
+                            valign: 'middle'
+                            text_size: self.size
+                        Label:
+                            id: budget_feedback
+                            text: ''
+                            font_size: sp(11)
+                            bold: True
+                            color: 0.50, 0.80, 0.55, 1
+                            halign: 'right'
+                            valign: 'middle'
+                            text_size: self.size
+
+                    Widget:
+                        size_hint_y: None
+                        height: dp(1)
+                        canvas.before:
+                            Color:
+                                rgba: 0.14, 0.16, 0.28, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+
+                    BoxLayout:
+                        id: cat_budget_list
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: self.minimum_height
+                        spacing: 0
+
+                    Widget:
+                        size_hint_y: None
+                        height: dp(1)
+                        canvas.before:
+                            Color:
+                                rgba: 0.14, 0.16, 0.28, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(44)
+                        padding: 0, dp(4)
+                        spacing: dp(10)
+
+                        Widget:
+
+                        PrimaryButton:
+                            text: 'Save Budgets'
+                            font_size: sp(13)
+                            size_hint_x: None
+                            width: dp(132)
+                            height: dp(40)
+                            on_press: root.save_all_budgets()
+
+                # ── Export ────────────────────────────────────────────────────
+                # Compact single-row card: stacked title + subtitle (left) and
+                # Export pill (right). Feedback line collapses to 0 when empty,
+                # so the card stays at its base silhouette until used.
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: dp(18), dp(12), dp(18), dp(12)
+                    spacing: dp(6)
+                    canvas.before:
+                        Color:
+                            rgba: 0.096, 0.110, 0.190, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(18)]
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(40)
+                        spacing: dp(12)
+
+                        BoxLayout:
+                            orientation: 'vertical'
+                            spacing: dp(2)
+
+                            Label:
+                                text: 'EXPORT DATA'
+                                font_size: sp(11)
+                                bold: True
+                                color: 0.55, 0.57, 0.72, 1
+                                size_hint_y: None
+                                height: dp(16)
+                                halign: 'left'
+                                valign: 'middle'
+                                text_size: self.size
+
+                            Label:
+                                text: 'Download all transactions as a CSV file.'
+                                font_size: sp(11)
+                                color: 0.50, 0.52, 0.62, 1
+                                halign: 'left'
+                                valign: 'middle'
+                                text_size: self.size
+
+                        PrimaryButton:
+                            text: 'Export'
+                            font_size: sp(13)
+                            size_hint_x: None
+                            width: dp(102)
+                            height: dp(40)
+                            pos_hint: {'center_y': 0.5}
+                            on_press: root.export_csv()
+
+                    Label:
+                        id: export_feedback
+                        text: ''
+                        font_size: sp(11)
+                        bold: True
+                        color: 0.50, 0.80, 0.55, 1
+                        size_hint_y: None
+                        height: dp(16) if self.text else 0
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.size
+
+        # ── Bottom nav ────────────────────────────────────────────────────────
+        NavBar:
+            size_hint_y: None
+            height: dp(72)

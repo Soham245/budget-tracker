@@ -1,0 +1,365 @@
+#:kivy 2.0
+
+# ──────────────────────────────────────────────────────────────────────────────
+#  DESIGN SYSTEM
+#
+#  Shared, dynamic-class building blocks for screen chrome. Every screen header
+#  is composed of these — *no* screen reimplements height/padding/font/radius/
+#  glyph by hand. If you find yourself tempted to fiddle with dp(48) vs dp(52)
+#  vs dp(40), stop: fix it here and every screen inherits the change.
+#
+#  Tokens
+#  ──────
+#     Header height            dp(56)
+#     Header horizontal pad    dp(16)  (universal content gutter — title,
+#                                       cards, search bars, chips, rows all
+#                                       align to this one column)
+#     Header vertical pad      dp(6)   (symmetric — header content is centered)
+#     Header inner spacing     dp(8)
+#     Screen horizontal pad    dp(16)  (matches header so titles align with
+#                                       card edges below)
+#     Icon-button size         dp(40)  (square)
+#     Icon-button radius       dp(12)
+#     Icon-button bg (rest)    rgba(0.094, 0.108, 0.180, 1)
+#     Icon-button bg (press)   rgba(0.130, 0.146, 0.236, 1)
+#     Icon-button icon size    sp(20)
+#     Icon-button icon color   rgba(0.82, 0.84, 0.96, 1)
+#     Title font size          sp(22)
+#     Title color              rgba(0.94, 0.94, 0.98, 1)
+#     Subtitle font size       sp(11)
+#     Subtitle color           rgba(0.50, 0.52, 0.62, 1)
+#     Back-arrow glyph            (MaterialIcons arrow_back)
+#  ──────────────────────────────────────────────────────────────────────────────
+
+
+# ── Icon button ───────────────────────────────────────────────────────────────
+# 40×40 rounded square, transparent Kivy button chrome replaced by a single
+# RoundedRectangle. The `icon` property is the only thing callers configure.
+<IconButton@Button>:
+    icon: ''
+    font_name: 'MaterialIcons'
+    text: self.icon
+    font_size: sp(20)
+    color: 0.82, 0.84, 0.96, 1
+    background_normal: ''
+    background_down: ''
+    background_color: 0, 0, 0, 0
+    size_hint: None, None
+    size: dp(40), dp(40)
+    pos_hint: {'center_y': 0.5}
+    canvas.before:
+        Color:
+            rgba: (0.130, 0.146, 0.236, 1) if self.state == 'down' else (0.094, 0.108, 0.180, 1)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(12)]
+
+
+# ── Back button ───────────────────────────────────────────────────────────────
+# Same chrome as IconButton, locked to the MaterialIcons arrow_back glyph so
+# no screen can drift to a different back affordance (literal chevron, custom
+# glyph, etc.).
+<BackButton@NavArrowButton>:
+    arrow: '‹'  # single-left-pointing chevron
+
+
+# ── Accent icon button ────────────────────────────────────────────────────────
+# Variant for actions that should pop against a category accent (e.g. the edit
+# button on expense_detail). Caller passes `accent` as an rgba tuple; the
+# button tints both its background and its glyph from that single source.
+<AccentIconButton@IconButton>:
+    accent: 0.49, 0.39, 0.86, 1
+    color: self.accent
+    canvas.before:
+        Color:
+            rgba: self.accent[0], self.accent[1], self.accent[2], 0.28 if self.state == 'down' else 0.18
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(12)]
+
+
+# ── Screen header (single-line) ───────────────────────────────────────────────
+# Uniform top bar. Always 56 dp tall, symmetric vertical padding so children
+# anchored center_y sit on the same baseline across every screen.
+<ScreenHeader@BoxLayout>:
+    size_hint_y: None
+    height: dp(56)
+    padding: dp(16), dp(6), dp(16), dp(6)
+    spacing: dp(8)
+
+
+# ── Screen header (two-line) ──────────────────────────────────────────────────
+# For screens that need a subtitle (e.g. Calendar's "Spending heatmap").
+# Same horizontal rhythm as ScreenHeader; just taller and arranged vertically
+# inside.
+<ScreenHeaderTwoLine@BoxLayout>:
+    size_hint_y: None
+    height: dp(72)
+    padding: dp(16), dp(8), dp(16), dp(8)
+    spacing: dp(8)
+
+
+# ── Header title ──────────────────────────────────────────────────────────────
+# 22sp bold, left-aligned, fills the available horizontal slot. Use inside a
+# ScreenHeader so left/right padding is already handled by the container.
+<HeaderTitle@Label>:
+    font_size: sp(22)
+    bold: True
+    color: 0.94, 0.94, 0.98, 1
+    halign: 'left'
+    valign: 'middle'
+    text_size: self.size
+
+
+# ── Nav arrow button ──────────────────────────────────────────────────────────
+# Filled rounded-square navigation button used app-wide for any directional
+# control: month switchers, calendar paging, carousel arrows. Soft dark-purple
+# fill, brighter on press, no outline / no glow / no stacked instructions.
+# Caller passes `arrow` as a plain text glyph ('<' or '>') — locked design.
+<NavArrowButton@Button>:
+    arrow: '‹'
+    text: self.arrow
+    # Thin chevron glyphs (U+2039 / U+203A) — lighter visual weight than
+    # ASCII <>, more native to mobile. Not bold; medium font size.
+    font_size: sp(20)
+    bold: False
+    halign: 'center'
+    valign: 'middle'
+    text_size: self.size
+    color: 0.94, 0.95, 1, (0.38 if self.disabled else 1)
+    background_normal: ''
+    background_down: ''
+    background_color: 0, 0, 0, 0
+    size_hint: None, None
+    size: dp(40), dp(40)
+    pos_hint: {'center_y': 0.5}
+    canvas.before:
+        Color:
+            rgba: (0.30, 0.27, 0.46, 1) if self.state == 'down' else (0.23, 0.21, 0.38, 1)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(11)]
+
+
+# ── Header subtitle ───────────────────────────────────────────────────────────
+<HeaderSubtitle@Label>:
+    font_size: sp(11)
+    color: 0.50, 0.52, 0.62, 1
+    halign: 'left'
+    valign: 'top'
+    text_size: self.size
+    size_hint_y: None
+    height: dp(16)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+#  MODAL / DIALOG SYSTEM
+#
+#  Every popup in the app subclasses AppModal (utils/popups.py). The class
+#  strips Kivy's default Popup chrome (title bar, separator, BorderImage card)
+#  via __init__ kwargs and uses a transparent PNG as `background`, so the only
+#  visible surface is the dark-navy RoundedRectangle drawn below. Result:
+#  a single consistent modal shell with no rectangular Kivy artifacts.
+#
+#  Composition pattern inside a subclass rule:
+#     <MyModal>:
+#         size_hint: 0.88, None
+#         height: dp(NNN)
+#         BoxLayout:                 # padding/spacing per modal
+#             orientation: 'vertical'
+#             padding: dp(22), dp(18), dp(22), dp(18)
+#             spacing: dp(14)
+#             ModalTitle:
+#                 text: 'Title'
+#             ...
+#             ModalActionRow:
+#                 SecondaryButton: ...
+#                 PrimaryButton:   ...
+#
+#  Tokens
+#  ──────
+#     Corner radius            dp(24)   (matches premium fintech aesthetic)
+#     Card fill                rgba(0.108, 0.124, 0.205, 1)
+#     Card hairline border     rgba(0.75, 0.77, 0.95, 0.06)
+#     Field surface            rgba(0.078, 0.092, 0.16, 1)
+#     Field radius             dp(14)
+#     Title size               sp(18)  bold
+#     Body size                sp(13)  muted
+#     Action button row        dp(48)  tall, dp(10) gap
+#     Slide-up offset          dp(14)  on open (200ms ease-out)
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+# ── Modal shell (rounded card surface + entry slide) ──────────────────────────
+<AppModal>:
+    canvas.before:
+        Color:
+            rgba: 0.17, 0.19, 0.30, 1
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(24),]
+        Color:
+            rgba: 0.75, 0.77, 0.95, 0.10
+        Line:
+            width: 1.0
+            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(24))
+
+
+# ── Modal typography ──────────────────────────────────────────────────────────
+<ModalTitle@Label>:
+    font_size: sp(18)
+    bold: True
+    color: 0.95, 0.95, 0.99, 1
+    halign: 'left'
+    valign: 'middle'
+    text_size: self.size
+    size_hint_y: None
+    height: dp(26)
+
+<ModalSubtitle@Label>:
+    font_size: sp(13)
+    color: 0.62, 0.64, 0.76, 1
+    halign: 'left'
+    valign: 'top'
+    text_size: self.size
+
+<ModalFieldLabel@Label>:
+    font_size: sp(11)
+    bold: True
+    color: 0.55, 0.57, 0.72, 1
+    halign: 'left'
+    valign: 'middle'
+    text_size: self.size
+    size_hint_y: None
+    height: dp(14)
+
+
+# ── Modal close button (top-right ✕) ──────────────────────────────────────────
+<ModalCloseButton@Button>:
+    font_name: 'MaterialIcons'
+    text: ''  # close
+    font_size: sp(16)
+    color: 0.55, 0.58, 0.72, 1
+    background_normal: ''
+    background_down: ''
+    background_color: 0, 0, 0, 0
+    size_hint: None, None
+    size: dp(30), dp(30)
+    pos_hint: {'center_y': 0.5}
+    canvas.before:
+        Color:
+            rgba: (0.14, 0.16, 0.26, 1) if self.state == 'down' else (0, 0, 0, 0)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(15),]
+
+
+# ── Rounded input field wrapper ───────────────────────────────────────────────
+# Drop a TextInput (or a ₹ prefix + TextInput) inside this and it inherits the
+# field surface look used across every modal.
+<ModalField@BoxLayout>:
+    size_hint_y: None
+    height: dp(50)
+    canvas.before:
+        Color:
+            rgba: 0.078, 0.092, 0.16, 1
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(14),]
+
+
+# ── Action row (Cancel | Primary) ─────────────────────────────────────────────
+<ModalActionRow@BoxLayout>:
+    size_hint_y: None
+    height: dp(48)
+    spacing: dp(10)
+
+
+# ── Danger button (red filled primary, same chrome as PrimaryButton) ──────────
+<DangerButton@RoundedButton>:
+    fill_color: 0.78, 0.36, 0.36, 1
+    color: 1, 1, 1, 1
+    font_size: sp(14)
+    bold: True
+    size_hint_y: None
+    height: dp(48)
+
+
+# ── Confirm popup (compact destructive dialog) ────────────────────────────────
+<ConfirmPopup>:
+    size_hint: 0.82, None
+    height: dp(232)
+
+    BoxLayout:
+        orientation: 'vertical'
+        padding: dp(22), dp(22), dp(22), dp(18)
+        spacing: dp(12)
+
+        # Title row: warning icon + title
+        BoxLayout:
+            size_hint_y: None
+            height: dp(34)
+            spacing: dp(12)
+
+            Widget:
+                size_hint: None, None
+                size: dp(34), dp(34)
+                pos_hint: {'center_y': 0.5}
+                canvas.before:
+                    Color:
+                        rgba: root.confirm_color[0], root.confirm_color[1], root.confirm_color[2], 0.16
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(11),]
+                Label:
+                    font_name: 'MaterialIcons'
+                    text: ''  # error_outline / warning
+                    font_size: sp(18)
+                    color: root.confirm_color
+                    size: self.parent.size
+                    pos: self.parent.pos
+                    halign: 'center'
+                    valign: 'middle'
+                    text_size: self.size
+
+            Label:
+                text: root.title_text
+                font_size: sp(17)
+                bold: True
+                color: 0.95, 0.95, 0.99, 1
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+
+        # Body message
+        Label:
+            text: root.message
+            font_size: sp(13)
+            color: 0.66, 0.68, 0.80, 1
+            halign: 'left'
+            valign: 'top'
+            text_size: self.size
+            size_hint_y: 1
+
+        # Actions
+        BoxLayout:
+            size_hint_y: None
+            height: dp(48)
+            spacing: dp(10)
+
+            SecondaryButton:
+                text: 'Cancel'
+                height: dp(48)
+                on_press: root.dismiss()
+
+            DangerButton:
+                text: root.confirm_label
+                fill_color: root.confirm_color
+                on_press: root.confirm()

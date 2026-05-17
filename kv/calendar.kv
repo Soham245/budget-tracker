@@ -1,0 +1,337 @@
+#:kivy 2.0
+#:import CalendarDayCell screens.calendar_screen
+#:import LegendBlock screens.calendar_screen
+#:import CalendarTxRow screens.calendar_screen
+
+
+# ── Transaction row (compact, category-icon disc, matches Home/History) ──────
+<CalendarTxRow>:
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(54)
+    spacing: dp(10)
+    padding: dp(12), dp(8)
+    canvas.before:
+        Color:
+            rgba: 0.094, 0.108, 0.180, 1
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(12)]
+
+    # Category icon disc (same pattern as home/history rows)
+    AnchorLayout:
+        size_hint_x: None
+        width: dp(34)
+        anchor_x: 'center'
+        anchor_y: 'center'
+
+        Widget:
+            size_hint: None, None
+            size: dp(30), dp(30)
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            canvas.before:
+                Color:
+                    rgba: root.cat_color[0], root.cat_color[1], root.cat_color[2], 0.18
+                Ellipse:
+                    pos: self.pos
+                    size: self.size
+
+        Label:
+            font_name: 'MaterialIcons'
+            text: icon_for_category(root.title)
+            font_size: sp(14)
+            halign: 'center'
+            valign: 'middle'
+            color: root.cat_color
+            size_hint: None, None
+            size: dp(30), dp(30)
+            text_size: self.size
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(2)
+
+        Label:
+            text: root.title
+            font_size: sp(13)
+            bold: True
+            color: 0.92, 0.92, 0.97, 1
+            halign: 'left'
+            text_size: self.size
+            valign: 'middle'
+
+        Label:
+            text: root.subtitle
+            font_size: sp(11)
+            color: 0.5, 0.5, 0.62, 1
+            halign: 'left'
+            text_size: self.size
+            valign: 'middle'
+
+    Label:
+        text: root.amount
+        font_size: sp(14)
+        bold: True
+        color: 0.75, 0.77, 0.95, 1
+        halign: 'right'
+        text_size: self.size
+        valign: 'middle'
+        size_hint_x: None
+        width: dp(96)
+
+
+# ── Calendar screen ───────────────────────────────────────────────────────────
+<CalendarScreen>:
+    canvas.before:
+        Color:
+            rgba: 0.035, 0.048, 0.118, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        # ── App bar: title + subtitle (left)  |  total + active (right) ───────
+        ScreenHeaderTwoLine:
+
+            BoxLayout:
+                orientation: 'vertical'
+                spacing: dp(2)
+                HeaderTitle:
+                    text: 'Calendar'
+                    size_hint_y: None
+                    height: dp(28)
+                HeaderSubtitle:
+                    text: 'Spending heatmap'
+
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_x: None
+                width: dp(130)
+                spacing: dp(2)
+                Label:
+                    text: root.month_total_text
+                    font_size: sp(16)
+                    bold: True
+                    color: 0.94, 0.94, 0.98, 1
+                    halign: 'right'
+                    valign: 'middle'
+                    text_size: self.size
+                    size_hint_y: None
+                    height: dp(28)
+                Label:
+                    text: root.active_days_text
+                    font_size: sp(11)
+                    color: 0.50, 0.52, 0.62, 1
+                    halign: 'right'
+                    valign: 'top'
+                    text_size: self.size
+                    size_hint_y: None
+                    height: dp(16)
+
+        # ── Scroll content ────────────────────────────────────────────────────
+        ScrollView:
+            do_scroll_x: False
+            bar_width: 0
+
+            BoxLayout:
+                id: scroll_content
+                orientation: 'vertical'
+                size_hint_y: None
+                height: dp(720)
+                padding: dp(16), dp(4), dp(16), dp(100)
+                spacing: dp(14)
+
+                # ── Month nav ─────────────────────────────────────────────────
+                BoxLayout:
+                    size_hint_y: None
+                    height: dp(46)
+                    spacing: dp(10)
+
+                    NavArrowButton:
+                        arrow: '‹'
+                        on_press: root.prev_month()
+
+                    Label:
+                        text: root.month_display
+                        font_size: sp(16)
+                        bold: True
+                        color: 0.94, 0.94, 0.98, 1
+                        halign: 'center'
+                        valign: 'middle'
+                        text_size: self.size
+
+                    NavArrowButton:
+                        arrow: '›'
+                        disabled: root.is_current_month
+                        on_press: root.next_month()
+
+                # ── Weekday row ───────────────────────────────────────────────
+                GridLayout:
+                    cols: 7
+                    size_hint_y: None
+                    height: dp(22)
+                    spacing: dp(6)
+                    Label:
+                        text: 'S'
+                        font_size: sp(11)
+                        color: 0.42, 0.44, 0.55, 1
+                        bold: True
+                    Label:
+                        text: 'M'
+                        font_size: sp(11)
+                        color: 0.42, 0.44, 0.55, 1
+                        bold: True
+                    Label:
+                        text: 'T'
+                        font_size: sp(11)
+                        color: 0.42, 0.44, 0.55, 1
+                        bold: True
+                    Label:
+                        text: 'W'
+                        font_size: sp(11)
+                        color: 0.42, 0.44, 0.55, 1
+                        bold: True
+                    Label:
+                        text: 'T'
+                        font_size: sp(11)
+                        color: 0.42, 0.44, 0.55, 1
+                        bold: True
+                    Label:
+                        text: 'F'
+                        font_size: sp(11)
+                        color: 0.42, 0.44, 0.55, 1
+                        bold: True
+                    Label:
+                        text: 'S'
+                        font_size: sp(11)
+                        color: 0.42, 0.44, 0.55, 1
+                        bold: True
+
+                # ── Day grid ──────────────────────────────────────────────────
+                GridLayout:
+                    id: day_grid
+                    cols: 7
+                    rows: 6
+                    size_hint_y: None
+                    height: dp(282)
+                    spacing: dp(6)
+                    row_default_height: dp(42)
+                    row_force_default: True
+
+                # ── Legend ────────────────────────────────────────────────────
+                BoxLayout:
+                    size_hint_y: None
+                    height: dp(26)
+                    spacing: dp(8)
+
+                    Label:
+                        text: 'Less'
+                        font_size: sp(10)
+                        color: 0.42, 0.44, 0.55, 1
+                        size_hint_x: None
+                        width: dp(32)
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.size
+
+                    LegendBlock:
+                        level: 0
+                        size_hint_x: 1
+                    LegendBlock:
+                        level: 1
+                        size_hint_x: 1
+                    LegendBlock:
+                        level: 2
+                        size_hint_x: 1
+                    LegendBlock:
+                        level: 3
+                        size_hint_x: 1
+                    LegendBlock:
+                        level: 4
+                        size_hint_x: 1
+
+                    Label:
+                        text: 'More'
+                        font_size: sp(10)
+                        color: 0.42, 0.44, 0.55, 1
+                        size_hint_x: None
+                        width: dp(36)
+                        halign: 'right'
+                        valign: 'middle'
+                        text_size: self.size
+
+                # ── Day detail card ───────────────────────────────────────────
+                BoxLayout:
+                    id: detail_card
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: dp(110)
+                    padding: dp(18), dp(16), dp(18), dp(16)
+                    spacing: dp(6)
+                    canvas.before:
+                        Color:
+                            rgba: 0.094, 0.108, 0.180, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(18)]
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(28)
+
+                        Label:
+                            id: detail_date
+                            text: ''
+                            font_size: sp(15)
+                            bold: True
+                            color: 0.94, 0.94, 0.98, 1
+                            halign: 'left'
+                            valign: 'middle'
+                            text_size: self.size
+
+                        # Tx count pill
+                        Label:
+                            id: detail_count
+                            text: '0'
+                            font_size: sp(12)
+                            bold: True
+                            color: 0.94, 0.94, 0.98, 1
+                            size_hint_x: None
+                            width: dp(36)
+                            halign: 'center'
+                            valign: 'middle'
+                            text_size: self.size
+                            canvas.before:
+                                Color:
+                                    rgba: 0.16, 0.18, 0.30, 1
+                                RoundedRectangle:
+                                    pos: self.x + dp(6), self.y + dp(2)
+                                    size: self.width - dp(12), self.height - dp(4)
+                                    radius: [dp(10)]
+
+                    Label:
+                        id: detail_total
+                        text: ''
+                        font_size: sp(12)
+                        color: 0.55, 0.57, 0.70, 1
+                        size_hint_y: None
+                        height: dp(20)
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.size
+
+                    BoxLayout:
+                        id: detail_tx_list
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: dp(0)
+                        spacing: dp(6)
+
+        NavBar:
+            size_hint_y: None
+            height: dp(72)

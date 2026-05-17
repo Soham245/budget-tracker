@@ -1,0 +1,644 @@
+#:kivy 2.0
+#:import SpendingChart screens.analytics
+#:import MonthBar screens.analytics
+#:import InsightRow screens.analytics
+#:import HealthScoreCard screens.analytics
+#:import ScoreProgressBar screens.analytics
+#:import StackedCategoryBar screens.analytics
+#:import CategoryLegendRow screens.analytics
+#:import CounterLabel screens.analytics
+
+
+# ── Category legend row ──────────────────────────────────────────────────────
+# Two-line layout: top is name/%/amount, bottom is a thin tinted share fill so
+# every row carries its own embedded bar (no need to mentally trace back up to
+# the stacked bar to read share). Row height accounts for both lines + gap.
+<CategoryLegendRow>:
+    cat_name: ''
+    cat_color: [0.5, 0.5, 0.5, 1]
+    pct_text: ''
+    amount_text: ''
+    share: 0
+    orientation: 'vertical'
+    size_hint_y: None
+    height: dp(38)
+    spacing: dp(6)
+    padding: 0, 0, 0, 0
+
+    # Top line — name + % + amount
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint_y: None
+        height: dp(22)
+        spacing: dp(10)
+
+        Widget:
+            size_hint_x: None
+            size_hint_y: None
+            size: dp(8), dp(8)
+            pos_hint: {'center_y': 0.5}
+            canvas.before:
+                Color:
+                    rgba: root.cat_color
+                Ellipse:
+                    pos: self.pos
+                    size: self.size
+
+        Label:
+            text: root.cat_name
+            font_size: sp(13)
+            color: 0.88, 0.89, 0.94, 1
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.size
+
+        Label:
+            text: root.pct_text
+            font_size: sp(11)
+            color: 0.52, 0.54, 0.65, 1
+            size_hint_x: None
+            width: dp(40)
+            halign: 'right'
+            valign: 'middle'
+            text_size: self.size
+
+        Label:
+            text: root.amount_text
+            font_size: sp(13)
+            bold: True
+            color: 0.94, 0.94, 0.98, 1
+            size_hint_x: None
+            width: dp(86)
+            halign: 'right'
+            valign: 'middle'
+            text_size: self.size
+
+    # Bottom line — mini share progress fill
+    RelativeLayout:
+        size_hint_y: None
+        height: dp(4)
+
+        Widget:
+            pos: 0, 0
+            size: self.parent.width, dp(3)
+            canvas.before:
+                Color:
+                    rgba: 0.14, 0.16, 0.26, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(1.5),]
+                Color:
+                    rgba: root.cat_color
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.parent.width * root.share, self.height
+                    radius: [dp(1.5),]
+
+
+# ── Insight card (soft tinted fill + leading icon) ────────────────────────────
+# No left accent strip — replaced with a small tinted icon disc that doubles
+# as a tone indicator (green check, amber warning, red error, etc.). The card
+# background uses the accent color at low alpha to read as semantically tinted
+# without becoming a neon block.
+#
+# Height is LOCKED — every insight pill is dp(76) regardless of text length.
+# Long text wraps within the fixed text box (text_size: self.width, self.height
+# below) so the card geometry stays identical card-to-card. This rule must not
+# be overridden by callers.
+<InsightRow>:
+    insight_text: ''
+    accent_color: [0.75, 0.77, 0.95, 1]
+    icon_glyph: ''
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(76)
+    padding: dp(16), dp(12), dp(18), dp(12)
+    spacing: dp(14)
+    canvas.before:
+        Color:
+            rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.12
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(16),]
+        Color:
+            rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.16
+        Line:
+            width: 1.0
+            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(16))
+
+    # Tinted icon disc
+    AnchorLayout:
+        size_hint_x: None
+        width: dp(36)
+        anchor_x: 'center'
+        anchor_y: 'center'
+
+        Widget:
+            size_hint: None, None
+            size: dp(32), dp(32)
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            canvas.before:
+                Color:
+                    rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.22
+                Ellipse:
+                    pos: self.pos
+                    size: self.size
+
+        Label:
+            font_name: 'MaterialIcons'
+            text: root.icon_glyph
+            font_size: sp(16)
+            halign: 'center'
+            valign: 'middle'
+            color: root.accent_color
+            size_hint: None, None
+            size: dp(32), dp(32)
+            text_size: self.size
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+    Label:
+        text: root.insight_text
+        font_size: sp(13)
+        color: 0.90, 0.91, 0.96, 1
+        halign: 'left'
+        valign: 'middle'
+        line_height: 1.32
+        text_size: self.width, self.height
+        shorten: False
+
+
+# ── Financial Health card ────────────────────────────────────────────────────
+# Hierarchy: status-tinted top row → big score → tighter /100 → status word
+# in vibrant accent → thin animated progress line → two short bullets.
+# Surface tone is slightly lifted from the page background so the card reads
+# as the primary destination on the screen.
+<HealthScoreCard>:
+    orientation: 'vertical'
+    size_hint_y: None
+    height: dp(268)
+    padding: dp(22), dp(18), dp(22), dp(20)
+    spacing: dp(8)
+    canvas.before:
+        Color:
+            rgba: 0.116, 0.134, 0.218, 1
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(20),]
+        Color:
+            rgba: root.status_color[0], root.status_color[1], root.status_color[2], 0.10
+        Line:
+            width: 1.0
+            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(20))
+
+    # Row: section label + status trend badge
+    BoxLayout:
+        size_hint_y: None
+        height: dp(36)
+
+        Label:
+            text: 'FINANCIAL HEALTH'
+            font_size: sp(11)
+            bold: True
+            color: 0.55, 0.57, 0.70, 1
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.size
+
+        Widget:
+            size_hint: None, None
+            size: dp(36), dp(36)
+            pos_hint: {'center_y': 0.5}
+            canvas.before:
+                Color:
+                    rgba: root.status_color[0], root.status_color[1], root.status_color[2], 0.20
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(11),]
+                Color:
+                    rgba: root.status_color[0], root.status_color[1], root.status_color[2], 0.32
+                Line:
+                    width: 1.0
+                    rounded_rectangle: (self.x, self.y, self.width, self.height, dp(11))
+            Label:
+                font_name: 'MaterialIcons'
+                text: root.status_icon
+                font_size: sp(17)
+                color: root.status_color
+                size: self.parent.size
+                pos: self.parent.pos
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+    # Big score + /100
+    BoxLayout:
+        size_hint_y: None
+        height: dp(66)
+        spacing: dp(2)
+
+        Label:
+            text: str(int(root.display_score))
+            font_size: sp(62)
+            bold: True
+            color: root.status_color
+            size_hint_x: None
+            width: dp(118)
+            halign: 'left'
+            valign: 'bottom'
+            text_size: self.size
+
+        Label:
+            text: '/100'
+            font_size: sp(14)
+            color: 0.50, 0.52, 0.64, 1
+            size_hint_x: None
+            width: dp(46)
+            halign: 'left'
+            valign: 'bottom'
+            text_size: self.size
+            padding: 0, dp(14)
+
+        Widget:
+
+    # Status word
+    Label:
+        text: root.status
+        font_size: sp(15)
+        bold: True
+        color: root.status_color
+        halign: 'left'
+        valign: 'middle'
+        text_size: self.size
+        size_hint_y: None
+        height: dp(22)
+
+    # Score progress line (animated fill)
+    ScoreProgressBar:
+        ratio: root.score / 100.0
+        bar_color: root.status_color
+        size_hint_y: None
+        height: dp(4)
+
+    Widget:
+        size_hint_y: None
+        height: dp(6)
+
+    # Reason bullets
+    Label:
+        text: ('•  ' + root.summary_a) if root.summary_a else ''
+        font_size: sp(13)
+        color: 0.86, 0.87, 0.93, 1
+        halign: 'left'
+        valign: 'middle'
+        text_size: self.size
+        shorten: True
+        shorten_from: 'right'
+        size_hint_y: None
+        height: dp(20)
+
+    Label:
+        text: ('•  ' + root.summary_b) if root.summary_b else ''
+        font_size: sp(13)
+        color: 0.86, 0.87, 0.93, 1
+        halign: 'left'
+        valign: 'middle'
+        text_size: self.size
+        shorten: True
+        shorten_from: 'right'
+        size_hint_y: None
+        height: dp(20)
+
+
+<AnalyticsScreen>:
+    canvas.before:
+        Color:
+            rgba: 0.035, 0.048, 0.118, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        # ── App bar ───────────────────────────────────────────────────────────
+        ScreenHeader:
+            HeaderTitle:
+                text: 'Analytics'
+
+        # ── Scrollable content ────────────────────────────────────────────────
+        ScrollView:
+            do_scroll_x: False
+            bar_width: 0
+
+            BoxLayout:
+                id: scroll_content
+                orientation: 'vertical'
+                size_hint_y: None
+                height: dp(1200)
+                padding: dp(16), dp(4), dp(16), dp(100)
+                spacing: dp(14)
+
+                # ── Section: 6-Month Trend ────────────────────────────────────
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: dp(212)
+                    padding: dp(20), dp(18), dp(20), dp(16)
+                    spacing: dp(10)
+                    canvas.before:
+                        Color:
+                            rgba: 0.116, 0.134, 0.218, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(20),]
+
+                    # Section label
+                    Label:
+                        text: '6-MONTH TREND'
+                        font_size: sp(11)
+                        bold: True
+                        color: 0.55, 0.57, 0.70, 1
+                        size_hint_y: None
+                        height: dp(18)
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.size
+
+                    # Chart height is LOCKED — derived once from the parent
+                    # card's fixed dp(212) (padding 34 + label 18 + spacing 10
+                    # + chart 122 + spacing 10 + budget-label 18 = 212). Setting
+                    # it explicitly here means the bar area can't be re-sized
+                    # by sibling-label texture metrics or BoxLayout drift.
+                    SpendingChart:
+                        id: spend_chart
+                        orientation: 'horizontal'
+                        spacing: dp(10)
+                        size_hint_y: None
+                        height: dp(122)
+
+                    # Budget reference caption
+                    Label:
+                        id: chart_budget_label
+                        text: ''
+                        font_size: sp(11)
+                        color: 0.50, 0.52, 0.64, 1
+                        size_hint_y: None
+                        height: dp(18)
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.size
+
+                # ── Section: THIS MONTH (hero hierarchy) ──────────────────────
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: dp(210)
+                    spacing: dp(12)
+
+                    # Header row — selected-month tag
+                    Label:
+                        text: root.selected_month_label.upper()
+                        font_size: sp(11)
+                        bold: True
+                        color: 0.75, 0.77, 0.95, 0.65
+                        size_hint_y: None
+                        height: dp(18)
+                        halign: 'left'
+                        valign: 'bottom'
+                        text_size: self.size
+
+                    # Hero card — TOTAL SPENT (dominant)
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: dp(96)
+                        padding: dp(20), dp(14), dp(20), dp(14)
+                        spacing: dp(4)
+                        canvas.before:
+                            Color:
+                                rgba: 0.124, 0.142, 0.230, 1
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [dp(20),]
+                            Color:
+                                rgba: 0.75, 0.77, 0.95, 0.08
+                            Line:
+                                width: 1.0
+                                rounded_rectangle: (self.x, self.y, self.width, self.height, dp(20))
+
+                        Label:
+                            text: 'TOTAL SPENT'
+                            font_size: sp(11)
+                            bold: True
+                            color: 0.55, 0.57, 0.70, 1
+                            halign: 'left'
+                            text_size: self.size
+                            size_hint_y: None
+                            height: dp(16)
+
+                        CounterLabel:
+                            id: total_card_value
+                            value: 0
+                            currency: '₹'
+                            text: '—'
+                            font_size: sp(28)
+                            bold: True
+                            color: 0.95, 0.95, 1, 1
+                            halign: 'left'
+                            valign: 'middle'
+                            text_size: self.size
+
+                    # Sub-row — DAILY AVG + VS LAST
+                    BoxLayout:
+                        size_hint_y: None
+                        height: dp(72)
+                        spacing: dp(10)
+
+                        BoxLayout:
+                            orientation: 'vertical'
+                            size_hint_x: 0.62
+                            padding: dp(16), dp(12)
+                            spacing: dp(4)
+                            canvas.before:
+                                Color:
+                                    rgba: 0.108, 0.124, 0.205, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(16),]
+                            Label:
+                                text: 'DAILY AVG'
+                                font_size: sp(10)
+                                bold: True
+                                color: 0.52, 0.54, 0.65, 1
+                                halign: 'left'
+                                text_size: self.size
+                                size_hint_y: None
+                                height: dp(14)
+                            Label:
+                                id: daily_avg_value
+                                text: '—'
+                                font_size: sp(16)
+                                bold: True
+                                color: 0.92, 0.92, 0.97, 1
+                                halign: 'left'
+                                text_size: self.size
+
+                        BoxLayout:
+                            orientation: 'vertical'
+                            size_hint_x: 0.38
+                            padding: dp(14), dp(12)
+                            spacing: dp(4)
+                            canvas.before:
+                                Color:
+                                    rgba: 0.108, 0.124, 0.205, 1
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [dp(16),]
+                            Label:
+                                text: 'VS LAST'
+                                font_size: sp(10)
+                                bold: True
+                                color: 0.52, 0.54, 0.65, 1
+                                halign: 'left'
+                                text_size: self.size
+                                size_hint_y: None
+                                height: dp(14)
+                            Label:
+                                id: vs_last_value
+                                text: '—'
+                                font_size: sp(16)
+                                bold: True
+                                color: 0.55, 0.55, 0.65, 1
+                                halign: 'left'
+                                text_size: self.size
+
+                # ── Section: Financial Health ─────────────────────────────────
+                HealthScoreCard:
+                    id: health_score_card
+
+                # ── Section: Smart Insights ───────────────────────────────────
+                BoxLayout:
+                    id: insights_section
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: dp(30)
+                    spacing: dp(12)
+
+                    Label:
+                        text: 'INSIGHTS'
+                        font_size: sp(11)
+                        bold: True
+                        color: 0.75, 0.77, 0.95, 0.60
+                        size_hint_y: None
+                        height: dp(18)
+                        halign: 'left'
+                        valign: 'bottom'
+                        text_size: self.size
+
+                    BoxLayout:
+                        id: insights_container
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: dp(0)
+                        spacing: dp(12)
+
+                # ── Section: By Category ──────────────────────────────────────
+                BoxLayout:
+                    id: cat_section
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: dp(80)
+                    padding: dp(20), dp(18), dp(20), dp(18)
+                    spacing: dp(14)
+                    canvas.before:
+                        Color:
+                            rgba: 0.116, 0.134, 0.218, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(20),]
+
+                    Label:
+                        text: 'BY CATEGORY'
+                        font_size: sp(11)
+                        bold: True
+                        color: 0.55, 0.57, 0.70, 1
+                        size_hint_y: None
+                        height: dp(18)
+                        halign: 'left'
+                        valign: 'middle'
+                        text_size: self.size
+
+                    StackedCategoryBar:
+                        id: cat_bar
+                        size_hint_y: None
+                        height: dp(8)
+
+                    BoxLayout:
+                        id: cat_legend
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: dp(0)
+                        spacing: dp(8)
+
+                # ── Section: Recurring Total ──────────────────────────────────
+                BoxLayout:
+                    id: recurring_card
+                    orientation: 'horizontal'
+                    size_hint_y: None
+                    height: dp(56)
+                    padding: dp(20), dp(14)
+                    opacity: 0
+                    canvas.before:
+                        Color:
+                            rgba: 0.108, 0.124, 0.205, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(16),]
+
+                    Label:
+                        text: 'Monthly Recurring'
+                        font_size: sp(14)
+                        color: 0.75, 0.77, 0.95, 0.85
+                        halign: 'left'
+                        text_size: self.size
+                        valign: 'middle'
+
+                    Label:
+                        id: recurring_total_value
+                        text: '—'
+                        font_size: sp(15)
+                        bold: True
+                        color: 0.85, 0.86, 0.98, 1
+                        halign: 'right'
+                        text_size: self.size
+                        valign: 'middle'
+
+                # ── Slack-absorbing filler ────────────────────────────────────
+                # scroll_content is a vertical BoxLayout, which iterates
+                # children bottom-up. Without this filler, any height drift
+                # in the variable sections (insights count, category count)
+                # would propagate UP through every child and shift the
+                # chart_card on screen. With this Widget added LAST (and
+                # therefore placed FIRST/BOTTOM in the layout), all slack
+                # from the locked scroll_content.height lands here, below
+                # the recurring card — invisible at scroll_y=1 — so every
+                # widget above gets a fixed position. This is the lock that
+                # actually prevents the user-observed "10dp drift on tap".
+                Widget:
+                    id: scroll_bottom_filler
+                    size_hint_y: 1
+
+        # ── Bottom nav ────────────────────────────────────────────────────────
+        NavBar:
+            size_hint_y: None
+            height: dp(72)

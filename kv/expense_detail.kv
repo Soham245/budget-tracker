@@ -1,0 +1,483 @@
+#:kivy 2.0
+
+# ── Make Recurring popup ──────────────────────────────────────────────────────
+# Card chrome from <AppModal> in design_system.kv. Only the composition lives
+# here.
+<MakeRecurringPopup>:
+    size_hint: 0.88, None
+    height: dp(286)
+
+    BoxLayout:
+        orientation: 'vertical'
+        padding: dp(22), dp(20), dp(22), dp(18)
+        spacing: dp(14)
+
+        # Header
+        BoxLayout:
+            size_hint_y: None
+            height: dp(28)
+            Label:
+                text: 'Make Recurring'
+                font_size: sp(17)
+                bold: True
+                color: 0.95, 0.95, 0.99, 1
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+            ModalCloseButton:
+                on_press: root.dismiss()
+
+        ModalFieldLabel:
+            text: 'REPEAT EVERY'
+
+        # Value input + day/month/year chips
+        BoxLayout:
+            size_hint_y: None
+            height: dp(44)
+            spacing: dp(8)
+
+            BoxLayout:
+                size_hint_x: None
+                width: dp(64)
+                canvas.before:
+                    Color:
+                        rgba: 0.078, 0.092, 0.16, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(12)]
+                TextInput:
+                    id: recur_value_input
+                    text: '1'
+                    input_filter: 'int'
+                    multiline: False
+                    font_size: sp(16)
+                    bold: True
+                    background_normal: ''
+                    background_active: ''
+                    background_color: 0, 0, 0, 0
+                    foreground_color: 0.96, 0.96, 1, 1
+                    cursor_color: 0.75, 0.77, 0.95, 1
+                    padding: dp(8), dp(10)
+                    halign: 'center'
+                    on_text: root.set_value(self.text)
+
+            RoundedButton:
+                text: 'Day'
+                fill_color: (0.75, 0.77, 0.95, 1) if root.recur_unit_val == 'day' else (0.13, 0.15, 0.24, 1)
+                color: (0.10, 0.10, 0.20, 1) if root.recur_unit_val == 'day' else (0.62, 0.64, 0.76, 1)
+                font_size: sp(13)
+                bold: root.recur_unit_val == 'day'
+                on_press: root.set_unit('day')
+
+            RoundedButton:
+                text: 'Month'
+                fill_color: (0.75, 0.77, 0.95, 1) if root.recur_unit_val == 'month' else (0.13, 0.15, 0.24, 1)
+                color: (0.10, 0.10, 0.20, 1) if root.recur_unit_val == 'month' else (0.62, 0.64, 0.76, 1)
+                font_size: sp(13)
+                bold: root.recur_unit_val == 'month'
+                on_press: root.set_unit('month')
+
+            RoundedButton:
+                text: 'Year'
+                fill_color: (0.75, 0.77, 0.95, 1) if root.recur_unit_val == 'year' else (0.13, 0.15, 0.24, 1)
+                color: (0.10, 0.10, 0.20, 1) if root.recur_unit_val == 'year' else (0.62, 0.64, 0.76, 1)
+                font_size: sp(13)
+                bold: root.recur_unit_val == 'year'
+                on_press: root.set_unit('year')
+
+        # Preview
+        Label:
+            text: root.recur_preview
+            font_size: sp(12)
+            color: 0.62, 0.66, 0.84, 1
+            size_hint_y: None
+            height: dp(20)
+            halign: 'left'
+            text_size: self.size
+            valign: 'middle'
+
+        Widget:
+            size_hint_y: 1
+
+        # Actions
+        BoxLayout:
+            size_hint_y: None
+            height: dp(48)
+            spacing: dp(10)
+            SecondaryButton:
+                text: 'Cancel'
+                height: dp(48)
+                size_hint_x: 0.42
+                on_press: root.dismiss()
+            PrimaryButton:
+                text: 'Start Recurring'
+                height: dp(48)
+                size_hint_x: 0.58
+                on_press: root.confirm()
+
+
+# ── Detail action button — vertical: icon above label ─────────────────────────
+<DetailActionButton>:
+    orientation: 'vertical'
+    spacing: dp(3)
+    size_hint_y: None
+    height: dp(72)
+    padding: dp(8), dp(12), dp(8), dp(8)
+    canvas.before:
+        Color:
+            rgba: (self.tint[0], self.tint[1], self.tint[2], self.fill_alpha * 1.6) if self.state == 'down' else (self.tint[0], self.tint[1], self.tint[2], self.fill_alpha)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(16)]
+        Color:
+            rgba: self.tint[0], self.tint[1], self.tint[2], 0.18
+        Line:
+            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(16))
+            width: 1.0
+
+    Label:
+        text: root.icon
+        font_name: 'MaterialIcons'
+        font_size: sp(22)
+        color: root.tint
+        halign: 'center'
+        valign: 'middle'
+        text_size: self.size
+        size_hint_y: None
+        height: dp(28)
+
+    Label:
+        text: root.label
+        font_size: sp(11)
+        bold: True
+        color: root.tint
+        halign: 'center'
+        text_size: self.size
+        valign: 'middle'
+
+
+# ── Info row (left label + right value with side padding) ─────────────────────
+<DetailInfoRow>:
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(44)
+    padding: dp(18), 0
+
+    Label:
+        text: root.info_label
+        font_size: sp(13)
+        color: 0.48, 0.48, 0.60, 1
+        halign: 'left'
+        text_size: self.size
+        valign: 'middle'
+        size_hint_x: 0.42
+
+    Label:
+        text: root.info_value
+        font_size: sp(14)
+        bold: True
+        color: root.info_color
+        halign: 'right'
+        text_size: self.size
+        valign: 'middle'
+        size_hint_x: 0.58
+
+
+# ── Main screen ───────────────────────────────────────────────────────────────
+<ExpenseDetailScreen>:
+    canvas.before:
+        Color:
+            rgba: 0.06, 0.07, 0.12, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        # ── Floating app bar ──────────────────────────────────────────────────
+        # Edit lives in the action row at the bottom (alongside Pause/Active
+        # and Delete) — no duplicate edit affordance in the header anymore.
+        # Inherits ScreenHeader defaults so this back button sits at the
+        # same x-position as every other screen's header content.
+        ScreenHeader:
+            BackButton:
+                on_press: root.go_back()
+            Widget:
+
+        # ── Scrollable content ────────────────────────────────────────────────
+        ScrollView:
+            do_scroll_x: False
+            bar_width: 0
+
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                padding: dp(16), dp(4), dp(16), dp(40)
+
+                # Merchant / category icon (centered rounded square)
+                AnchorLayout:
+                    size_hint_y: None
+                    height: dp(104)
+                    anchor_x: 'center'
+                    anchor_y: 'center'
+
+                    BoxLayout:
+                        size_hint: None, None
+                        size: dp(76), dp(76)
+                        canvas.before:
+                            Color:
+                                rgba: root.accent_color[0] * 0.5, root.accent_color[1] * 0.4, root.accent_color[2] * 0.22, 1
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [dp(20)]
+
+                        Label:
+                            text: root.icon_letter
+                            font_size: sp(30)
+                            bold: True
+                            color: root.accent_color
+                            halign: 'center'
+                            valign: 'middle'
+                            text_size: self.size
+
+                # Title: note text or category name
+                Label:
+                    text: root.title_text
+                    font_size: sp(22)
+                    bold: True
+                    color: 0.96, 0.96, 1, 1
+                    size_hint_y: None
+                    height: dp(30)
+                    halign: 'center'
+                    text_size: self.size
+                    valign: 'middle'
+
+                Widget:
+                    size_hint_y: None
+                    height: dp(6)
+
+                # Amount — dominant hierarchy element
+                Label:
+                    text: root.amount_text
+                    font_size: sp(44)
+                    bold: True
+                    color: 0.96, 0.96, 1, 1
+                    size_hint_y: None
+                    height: dp(56)
+                    halign: 'center'
+                    text_size: self.size
+                    valign: 'middle'
+
+                Widget:
+                    size_hint_y: None
+                    height: dp(10)
+
+                # Category pill (centered) — icon + name in accent tint.
+                AnchorLayout:
+                    size_hint_y: None
+                    height: dp(30)
+                    anchor_x: 'center'
+                    anchor_y: 'center'
+
+                    Label:
+                        markup: True
+                        text: '[font=MaterialIcons]' + icon_for_category(root.category_name) + '[/font]  ' + root.category_name
+                        font_size: sp(12)
+                        bold: True
+                        color: root.accent_color
+                        halign: 'center'
+                        valign: 'middle'
+                        size_hint: None, None
+                        size: self.texture_size[0] + dp(22), dp(28)
+                        canvas.before:
+                            Color:
+                                rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.18
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [dp(14)]
+
+                # Recurring status pill (below category, only when recurring)
+                AnchorLayout:
+                    size_hint_y: None
+                    height: dp(26) if root.is_recurring else 0
+                    opacity: 1 if root.is_recurring else 0
+                    anchor_x: 'center'
+                    anchor_y: 'center'
+
+                    Label:
+                        text: root.kind_badge_text
+                        font_size: sp(11)
+                        bold: True
+                        # Tri-state coloring driven by badge text:
+                        #   Paused → amber, Active → green (matches Subscriptions
+                        #   manager ACTIVE label), Recurring → primary lavender.
+                        color:
+                            (0.95, 0.78, 0.45, 1) if root.recur_paused else \
+                            (0.48, 0.82, 0.58, 1) if root.kind_badge_text == 'Active' else \
+                            (0.75, 0.77, 0.95, 1)
+                        halign: 'center'
+                        valign: 'middle'
+                        size_hint: None, None
+                        size: self.texture_size[0] + dp(18), dp(22)
+                        canvas.before:
+                            Color:
+                                rgba:
+                                    (0.95, 0.78, 0.45, 0.18) if root.recur_paused else \
+                                    (0.48, 0.82, 0.58, 0.16) if root.kind_badge_text == 'Active' else \
+                                    (0.75, 0.77, 0.95, 0.14)
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [dp(11)]
+
+                Widget:
+                    size_hint_y: None
+                    height: dp(36)
+
+                # ── Details card ──────────────────────────────────────────────
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    canvas.before:
+                        Color:
+                            rgba: 0.096, 0.110, 0.190, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(18)]
+
+                    DetailInfoRow:
+                        info_label: 'Date'
+                        info_value: root.date_text
+
+                    Widget:
+                        size_hint_y: None
+                        height: dp(1)
+                        canvas:
+                            Color:
+                                rgba: 0.14, 0.16, 0.28, 1
+                            Rectangle:
+                                pos: self.x + dp(18), self.y
+                                size: self.width - dp(36), dp(1)
+
+                    # Merchant row — shown only when there is a note
+                    DetailInfoRow:
+                        info_label: 'Merchant'
+                        info_value: root.note_text
+                        height: dp(44) if root.has_note else 0
+                        opacity: 1 if root.has_note else 0
+
+                    Widget:
+                        size_hint_y: None
+                        height: dp(1) if root.has_note else 0
+                        opacity: 1 if root.has_note else 0
+                        canvas:
+                            Color:
+                                rgba: 0.14, 0.16, 0.28, 1
+                            Rectangle:
+                                pos: self.x + dp(18), self.y
+                                size: self.width - dp(36), dp(1)
+
+                    DetailInfoRow:
+                        info_label: 'Category'
+                        info_value: root.category_name
+                        info_color: root.accent_color
+
+                    Widget:
+                        size_hint_y: None
+                        height: dp(1)
+                        canvas:
+                            Color:
+                                rgba: 0.14, 0.16, 0.28, 1
+                            Rectangle:
+                                pos: self.x + dp(18), self.y
+                                size: self.width - dp(36), dp(1)
+
+                    DetailInfoRow:
+                        info_label: 'Amount'
+                        info_value: root.amount_text
+
+                # ── Recurring card (only when recurring) ──────────────────────
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height if root.is_recurring else 0
+                    opacity: 1 if root.is_recurring else 0
+
+                    Widget:
+                        size_hint_y: None
+                        height: dp(16)
+
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: self.minimum_height
+                        padding: dp(18), dp(12)
+                        spacing: dp(4)
+                        canvas.before:
+                            Color:
+                                rgba: 0.096, 0.110, 0.190, 1
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [dp(18)]
+
+                        DetailInfoRow:
+                            info_label: 'Frequency'
+                            info_value: root.recur_label
+                            padding: 0, 0
+
+                        DetailInfoRow:
+                            info_label: 'Paused' if root.recur_paused else 'Next due'
+                            info_value: root.recur_next_text
+                            info_color: (0.95, 0.78, 0.45, 1) if root.recur_paused else (0.92, 0.92, 0.97, 1)
+                            padding: 0, 0
+
+                Widget:
+                    size_hint_y: None
+                    height: dp(24)
+
+                # ── Action row: Edit / Make Recurring / Delete ────────────────
+                BoxLayout:
+                    size_hint_y: None
+                    height: dp(72)
+                    spacing: dp(10)
+
+                    DetailActionButton:
+                        icon: ''
+                        label: 'Edit'
+                        tint: 0.75, 0.77, 0.95, 1
+                        fill_alpha: 0.10
+                        on_release: root.open_edit()
+
+                    # Middle slot — single button, content swaps based on state:
+                    #   recurring + active  → Pause   (amber)
+                    #   recurring + paused  → Active  (green, reactivates)
+                    #   one-off             → Recur   (mint, makes recurring)
+                    # Kept as ONE child (not two collapsed siblings) because
+                    # BoxLayout still inserts spacing on both sides of a
+                    # zero-width child — two siblings produced asymmetric
+                    # gaps and squeezed the visible button enough to wrap.
+                    DetailActionButton:
+                        icon:
+                            ('' if root.recur_paused else '') if root.is_recurring else ''
+                        label:
+                            ('Active' if root.recur_paused else 'Pause') if root.is_recurring else 'Recur'
+                        tint:
+                            ((0.48, 0.82, 0.58, 1) if root.recur_paused else (0.95, 0.78, 0.45, 1)) if root.is_recurring else (0.55, 0.79, 0.62, 1)
+                        fill_alpha: 0.14 if root.is_recurring else 0.10
+                        on_release: root.toggle_pause() if root.is_recurring else root.make_recurring()
+
+                    DetailActionButton:
+                        icon: ''
+                        label: 'Delete'
+                        tint: 0.92, 0.42, 0.42, 1
+                        fill_alpha: 0.22
+                        on_release: root.confirm_delete()

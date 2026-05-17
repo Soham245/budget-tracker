@@ -1,0 +1,645 @@
+#:kivy 2.0
+#:import GoalCard components.goal_card
+#:import MilestoneProgress components.goal_card
+
+# ── Savings goal card (compact, milestone-based progress) ─────────────────────
+<GoalCard>:
+    orientation: 'vertical'
+    size_hint_y: None
+    height: dp(204)
+    padding: dp(16), dp(14), dp(16), dp(14)
+    spacing: dp(10)
+    canvas.before:
+        Color:
+            rgba: 0.094, 0.108, 0.180, 1
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(18)]
+
+    # ── Row 1: icon · title/subtitle · pct · close ───────────────────────────
+    BoxLayout:
+        size_hint_y: None
+        height: dp(46)
+        spacing: dp(12)
+
+        # Tinted icon container
+        Widget:
+            size_hint: None, None
+            size: dp(40), dp(40)
+            pos_hint: {'center_y': 0.5}
+            canvas.before:
+                Color:
+                    rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.18
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(12)]
+            Label:
+                font_name: 'MaterialIcons'
+                text: ''  # track_changes (target) — same icon for every goal
+                font_size: sp(20)
+                color: root.accent_color
+                size: self.parent.size
+                pos: self.parent.pos
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+        # Title + subtitle
+        BoxLayout:
+            orientation: 'vertical'
+            spacing: dp(2)
+
+            Label:
+                text: root.goal_name
+                font_size: sp(15)
+                bold: True
+                color: 0.94, 0.94, 0.98, 1
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                size_hint_y: None
+                height: dp(22)
+
+            Label:
+                text: root.saved_text
+                font_size: sp(12)
+                color: 0.50, 0.52, 0.62, 1
+                halign: 'left'
+                valign: 'top'
+                text_size: self.size
+                size_hint_y: None
+                height: dp(18)
+
+        # Percentage
+        Label:
+            text: root.pct_text
+            font_size: sp(18)
+            bold: True
+            color: root.accent_color
+            halign: 'right'
+            valign: 'middle'
+            text_size: self.size
+            size_hint_x: None
+            width: dp(64)
+
+    # ── Row 2: milestone progress track ──────────────────────────────────────
+    MilestoneProgress:
+        ratio: root.ratio
+        accent_color: root.accent_color
+        size_hint_y: None
+        height: dp(18)
+
+    # ── Row 3: milestone labels (25/50/75/100) ───────────────────────────────
+    BoxLayout:
+        size_hint_y: None
+        height: dp(14)
+        Label:
+            text: '25%'
+            font_size: sp(10)
+            color: (root.accent_color[0], root.accent_color[1], root.accent_color[2], 1) if root.ratio >= 0.25 else (0.40, 0.42, 0.52, 1)
+            halign: 'center'
+            valign: 'top'
+            text_size: self.size
+        Label:
+            text: '50%'
+            font_size: sp(10)
+            color: (root.accent_color[0], root.accent_color[1], root.accent_color[2], 1) if root.ratio >= 0.50 else (0.40, 0.42, 0.52, 1)
+            halign: 'center'
+            valign: 'top'
+            text_size: self.size
+        Label:
+            text: '75%'
+            font_size: sp(10)
+            color: (root.accent_color[0], root.accent_color[1], root.accent_color[2], 1) if root.ratio >= 0.75 else (0.40, 0.42, 0.52, 1)
+            halign: 'center'
+            valign: 'top'
+            text_size: self.size
+        Label:
+            text: '100%'
+            font_size: sp(10)
+            color: (root.accent_color[0], root.accent_color[1], root.accent_color[2], 1) if root.ratio >= 1.0 else (0.40, 0.42, 0.52, 1)
+            halign: 'center'
+            valign: 'top'
+            text_size: self.size
+
+    # ── Row 4: due date · forecast ───────────────────────────────────────────
+    BoxLayout:
+        size_hint_y: None
+        height: dp(18)
+        Label:
+            text: root.due_text
+            font_size: sp(11)
+            color: 0.50, 0.52, 0.62, 1
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.size
+        Label:
+            text: root.forecast_text
+            font_size: sp(11)
+            color: 0.50, 0.52, 0.62, 1
+            halign: 'right'
+            valign: 'middle'
+            text_size: self.size
+
+    # ── Row 5: Add Savings (accent) · Delete (red) ───────────────────────────
+    BoxLayout:
+        size_hint_y: None
+        height: dp(40)
+        spacing: dp(10)
+
+        Button:
+            text: '+  Add Savings'
+            size_hint_x: 0.5
+            background_normal: ''
+            background_down: ''
+            background_color: 0, 0, 0, 0
+            color: root.accent_color
+            font_size: sp(13)
+            bold: True
+            canvas.before:
+                Color:
+                    rgba: root.accent_color[0], root.accent_color[1], root.accent_color[2], 0.10
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(12)]
+            on_press: app.root.get_screen('goals').open_add_savings(root.goal_id, root.goal_name)
+
+        Button:
+            text: 'Delete'
+            size_hint_x: 0.5
+            background_normal: ''
+            background_down: ''
+            background_color: 0, 0, 0, 0
+            color: 0.78, 0.40, 0.44, 1
+            font_size: sp(13)
+            bold: True
+            canvas.before:
+                Color:
+                    rgba: 0.78, 0.40, 0.44, 0.10
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(12)]
+            on_press: app.root.get_screen('goals').confirm_delete_goal(root.goal_id)
+
+
+# ── New goal popup ────────────────────────────────────────────────────────────
+# Card chrome (rounded surface, dim overlay, slide-up animation) comes from the
+# <AppModal> rule in design_system.kv — this rule only composes the contents.
+<AddGoalPopup>:
+    size_hint: 0.88, None
+    height: dp(488) if root.is_recurring else dp(348)
+
+    BoxLayout:
+        orientation: 'vertical'
+        padding: dp(22), dp(20), dp(22), dp(18)
+        spacing: dp(14)
+
+        # ── Header row ───────────────────────────────────────────────────────
+        BoxLayout:
+            size_hint_y: None
+            height: dp(30)
+
+            Label:
+                text: 'New Savings Goal'
+                font_size: sp(18)
+                bold: True
+                color: 0.95, 0.95, 0.99, 1
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+
+            ModalCloseButton:
+                on_press: root.dismiss()
+
+        # ── Name field ───────────────────────────────────────────────────────
+        ModalField:
+            TextInput:
+                id: name_input
+                hint_text: 'Goal name'
+                font_size: sp(14)
+                multiline: False
+                background_normal: ''
+                background_active: ''
+                background_color: 0, 0, 0, 0
+                foreground_color: 0.96, 0.96, 1, 1
+                hint_text_color: 0.36, 0.39, 0.52, 1
+                cursor_color: 0.75, 0.77, 0.95, 1
+                padding: dp(16), dp(14)
+
+        # ── Target amount ────────────────────────────────────────────────────
+        ModalField:
+            Label:
+                text: '₹'
+                size_hint_x: None
+                width: dp(38)
+                font_size: sp(18)
+                bold: True
+                color: 0.75, 0.77, 0.95, 1
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.size
+            TextInput:
+                id: amount_input
+                hint_text: 'Target amount'
+                font_size: sp(15)
+                input_type: 'number'
+                input_filter: 'float'
+                multiline: False
+                background_normal: ''
+                background_active: ''
+                background_color: 0, 0, 0, 0
+                foreground_color: 0.96, 0.96, 1, 1
+                hint_text_color: 0.36, 0.39, 0.52, 1
+                cursor_color: 0.75, 0.77, 0.95, 1
+                padding: dp(6), dp(14)
+
+        # ── Auto-contribute toggle ───────────────────────────────────────────
+        ToggleRow:
+            size_hint_y: None
+            height: dp(48)
+            padding: dp(16), 0
+            active: root.is_recurring
+            on_active: root.on_toggle_changed(self.active)
+            canvas.before:
+                Color:
+                    rgba: 0.078, 0.092, 0.16, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(14)]
+            Label:
+                text: 'Auto-contribute'
+                font_size: sp(14)
+                color: 0.88, 0.89, 0.96, 1
+                halign: 'left'
+                text_size: self.size
+                valign: 'middle'
+            RecurringToggle:
+                id: goal_recurring_toggle
+                active: root.is_recurring
+                pos_hint: {'center_y': 0.5}
+
+        # ── Recurring section (collapses when off) ───────────────────────────
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: dp(126) if root.is_recurring else 0
+            opacity: 1 if root.is_recurring else 0
+            disabled: not root.is_recurring
+            spacing: dp(10)
+
+            # Contribution amount
+            ModalField:
+                height: dp(46)
+                Label:
+                    text: '₹'
+                    size_hint_x: None
+                    width: dp(38)
+                    font_size: sp(16)
+                    bold: True
+                    color: 0.75, 0.77, 0.95, 1
+                    halign: 'right'
+                    valign: 'middle'
+                    text_size: self.size
+                TextInput:
+                    id: recur_amount_input
+                    hint_text: 'Contribution amount'
+                    font_size: sp(14)
+                    input_type: 'number'
+                    input_filter: 'float'
+                    multiline: False
+                    background_normal: ''
+                    background_active: ''
+                    background_color: 0, 0, 0, 0
+                    foreground_color: 1, 1, 1, 1
+                    hint_text_color: 0.36, 0.39, 0.52, 1
+                    cursor_color: 0.75, 0.77, 0.95, 1
+                    padding: dp(6), dp(12)
+                    on_text: root._update_preview()
+
+            # Repeat-every row
+            BoxLayout:
+                size_hint_y: None
+                height: dp(40)
+                spacing: dp(8)
+
+                BoxLayout:
+                    size_hint_x: None
+                    width: dp(60)
+                    canvas.before:
+                        Color:
+                            rgba: 0.078, 0.092, 0.16, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(12)]
+                    TextInput:
+                        id: goal_recur_value_input
+                        hint_text: '1'
+                        font_size: sp(15)
+                        bold: True
+                        input_filter: 'int'
+                        multiline: False
+                        background_normal: ''
+                        background_active: ''
+                        background_color: 0, 0, 0, 0
+                        foreground_color: 1, 1, 1, 1
+                        hint_text_color: 0.36, 0.39, 0.52, 1
+                        cursor_color: 0.75, 0.77, 0.95, 1
+                        padding: dp(8), dp(8)
+                        halign: 'center'
+                        disabled: not root.is_recurring
+                        on_text: root.set_recur_value(self.text)
+
+                RoundedButton:
+                    text: 'Day'
+                    fill_color: (0.75, 0.77, 0.95, 1) if root.recur_unit == 'day' else (0.13, 0.15, 0.24, 1)
+                    color: (0.10, 0.10, 0.20, 1) if root.recur_unit == 'day' else (0.62, 0.64, 0.76, 1)
+                    font_size: sp(12)
+                    bold: root.recur_unit == 'day'
+                    disabled: not root.is_recurring
+                    on_press: root.set_recur_unit('day')
+
+                RoundedButton:
+                    text: 'Month'
+                    fill_color: (0.75, 0.77, 0.95, 1) if root.recur_unit == 'month' else (0.13, 0.15, 0.24, 1)
+                    color: (0.10, 0.10, 0.20, 1) if root.recur_unit == 'month' else (0.62, 0.64, 0.76, 1)
+                    font_size: sp(12)
+                    bold: root.recur_unit == 'month'
+                    disabled: not root.is_recurring
+                    on_press: root.set_recur_unit('month')
+
+                RoundedButton:
+                    text: 'Year'
+                    fill_color: (0.75, 0.77, 0.95, 1) if root.recur_unit == 'year' else (0.13, 0.15, 0.24, 1)
+                    color: (0.10, 0.10, 0.20, 1) if root.recur_unit == 'year' else (0.62, 0.64, 0.76, 1)
+                    font_size: sp(12)
+                    bold: root.recur_unit == 'year'
+                    disabled: not root.is_recurring
+                    on_press: root.set_recur_unit('year')
+
+            # Preview line
+            Label:
+                text: root.recur_preview
+                font_size: sp(11)
+                color: 0.62, 0.66, 0.84, 1
+                size_hint_y: None
+                height: dp(20)
+                halign: 'left'
+                text_size: self.size
+                valign: 'middle'
+
+        # Error
+        Label:
+            id: error_label
+            text: ''
+            color: 0.88, 0.46, 0.46, 1
+            font_size: sp(12)
+            size_hint_y: None
+            height: dp(16) if self.text else 0
+            halign: 'left'
+            text_size: self.size
+
+        Widget:
+            size_hint_y: 1
+
+        # Actions
+        BoxLayout:
+            size_hint_y: None
+            height: dp(48)
+            spacing: dp(10)
+            SecondaryButton:
+                text: 'Cancel'
+                height: dp(48)
+                size_hint_x: 0.42
+                on_press: root.dismiss()
+            PrimaryButton:
+                text: 'Save Goal'
+                height: dp(48)
+                size_hint_x: 0.58
+                on_press: root.save_goal()
+
+
+# ── Add savings popup ─────────────────────────────────────────────────────────
+<AddSavingsPopup>:
+    size_hint: 0.86, None
+    height: dp(248)
+
+    BoxLayout:
+        orientation: 'vertical'
+        padding: dp(22), dp(20), dp(22), dp(18)
+        spacing: dp(14)
+
+        # Header
+        BoxLayout:
+            size_hint_y: None
+            height: dp(28)
+            Label:
+                text: 'Add to ' + root.goal_name
+                font_size: sp(17)
+                bold: True
+                color: 0.95, 0.95, 0.99, 1
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+            ModalCloseButton:
+                on_press: root.dismiss()
+
+        # Big amount input
+        BoxLayout:
+            size_hint_y: None
+            height: dp(64)
+            canvas.before:
+                Color:
+                    rgba: 0.078, 0.092, 0.16, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(16)]
+            Label:
+                text: '₹'
+                size_hint_x: None
+                width: dp(40)
+                font_size: sp(26)
+                bold: True
+                color: 0.75, 0.77, 0.95, 1
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.size
+            TextInput:
+                id: amount_input
+                hint_text: '0.00'
+                font_size: sp(26)
+                bold: True
+                input_type: 'number'
+                input_filter: 'float'
+                multiline: False
+                background_normal: ''
+                background_active: ''
+                background_color: 0, 0, 0, 0
+                foreground_color: 0.96, 0.96, 1, 1
+                hint_text_color: 0.30, 0.32, 0.44, 1
+                cursor_color: 0.75, 0.77, 0.95, 1
+                padding: dp(6), dp(16)
+
+        Label:
+            id: error_label
+            text: ''
+            color: 0.88, 0.46, 0.46, 1
+            font_size: sp(12)
+            size_hint_y: None
+            height: dp(16) if self.text else 0
+            halign: 'left'
+            text_size: self.size
+
+        # Actions
+        BoxLayout:
+            size_hint_y: None
+            height: dp(48)
+            spacing: dp(10)
+            SecondaryButton:
+                text: 'Cancel'
+                height: dp(48)
+                size_hint_x: 0.42
+                on_press: root.dismiss()
+            PrimaryButton:
+                text: 'Add'
+                height: dp(48)
+                size_hint_x: 0.58
+                on_press: root.add_savings()
+
+
+# ── Top progress summary card ─────────────────────────────────────────────────
+<GoalsSummaryCard@BoxLayout>:
+    saved_text: ''
+    target_text: ''
+    pct_text: ''
+    goals_count_text: ''
+    pct_color: [0.95, 0.78, 0.45, 1]
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(92)
+    padding: dp(20), dp(14), dp(20), dp(14)
+    canvas.before:
+        Color:
+            rgba: 0.094, 0.108, 0.180, 1
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(18)]
+
+    # Left: TOTAL PROGRESS / amount / of $target
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(2)
+
+        Label:
+            text: 'TOTAL PROGRESS'
+            font_size: sp(10)
+            bold: True
+            color: 0.50, 0.52, 0.62, 1
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.size
+            size_hint_y: None
+            height: dp(14)
+
+        Label:
+            text: root.saved_text
+            font_size: sp(20)
+            bold: True
+            color: 0.94, 0.94, 0.98, 1
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.size
+            size_hint_y: None
+            height: dp(26)
+
+        Label:
+            text: root.target_text
+            font_size: sp(11)
+            color: 0.50, 0.52, 0.62, 1
+            halign: 'left'
+            valign: 'top'
+            text_size: self.size
+            size_hint_y: None
+            height: dp(16)
+
+    # Right: pct + N goals
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint_x: None
+        width: dp(96)
+        spacing: dp(2)
+
+        Label:
+            text: root.pct_text
+            font_size: sp(26)
+            bold: True
+            color: root.pct_color
+            halign: 'right'
+            valign: 'middle'
+            text_size: self.size
+            size_hint_y: None
+            height: dp(34)
+
+        Label:
+            text: root.goals_count_text
+            font_size: sp(11)
+            color: 0.50, 0.52, 0.62, 1
+            halign: 'right'
+            valign: 'top'
+            text_size: self.size
+            size_hint_y: None
+            height: dp(16)
+
+
+# ── Goals screen ──────────────────────────────────────────────────────────────
+<GoalsScreen>:
+    canvas.before:
+        Color:
+            rgba: 0.035, 0.048, 0.118, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        # ── App bar: title + (+) add button ───────────────────────────────────
+        ScreenHeader:
+            HeaderTitle:
+                text: 'Savings Goals'
+            IconButton:
+                icon: ''
+                on_press: root.open_add_goal()
+
+        ScrollView:
+            id: goals_scroll
+            do_scroll_x: False
+            bar_width: 0
+            BoxLayout:
+                id: scroll_content
+                orientation: 'vertical'
+                size_hint_y: None
+                height: dp(400)
+                padding: dp(16), dp(4), dp(16), dp(100)
+                spacing: dp(14)
+
+                GoalsSummaryCard:
+                    id: summary_card
+
+                BoxLayout:
+                    id: goals_list
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: dp(0)
+                    spacing: dp(14)
+
+        NavBar:
+            size_hint_y: None
+            height: dp(72)

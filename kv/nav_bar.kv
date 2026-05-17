@@ -1,0 +1,209 @@
+#:kivy 2.0
+#:import NavButton components.nav_bar
+
+# ── Shared rounded button ─────────────────────────────────────────────────────
+<RoundedButton@Button>:
+    fill_color: 0.106, 0.122, 0.2, 1
+    background_normal: ''
+    background_down: ''
+    background_color: 0, 0, 0, 0
+    canvas.before:
+        Color:
+            rgba: self.fill_color
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(16),]
+        Color:
+            rgba: 0.75, 0.77, 0.95, 0.12
+        Line:
+            width: 1.1
+            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(16))
+
+<PrimaryButton@RoundedButton>:
+    fill_color: 0.75, 0.77, 0.95, 1
+    color: 0.1, 0.1, 0.2, 1
+    font_size: sp(14)
+    bold: True
+    size_hint_y: None
+    height: dp(52)
+
+<SecondaryButton@RoundedButton>:
+    fill_color: 0.16, 0.18, 0.28, 1
+    color: 0.7, 0.7, 0.8, 1
+    font_size: sp(14)
+    bold: False
+    size_hint_y: None
+    height: dp(52)
+
+# ── Icon label helper ─────────────────────────────────────────────────────────
+# Use font_name: 'MaterialIcons' + unicode codepoints for reliable cross-platform icons
+
+# ── Bottom navigation bar (rounded top, floating feel) ───────────────────────
+<NavBar@BoxLayout>:
+    orientation: 'horizontal'
+    padding: dp(4), dp(6), dp(4), dp(4)
+    canvas.before:
+        Color:
+            rgba: 0.082, 0.098, 0.176, 1
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(20), dp(20), 0, 0]
+        # Top hairline — confined to NavBar's top edge only
+        Color:
+            rgba: 0.18, 0.20, 0.32, 0.45
+        Rectangle:
+            pos: self.x + dp(20), self.top - dp(1)
+            size: self.width - dp(40), dp(1)
+
+    # ── Home tab ──────────────────────────────────────────────────────────────
+    NavButton:
+        orientation: 'vertical'
+        spacing: 0
+        padding: dp(4), dp(6), dp(4), dp(4)
+        on_release: app.go_to('home')
+        canvas.before:
+            Color:
+                rgba: (0.75, 0.77, 0.95, 0.12) if app.current_screen == 'home' else (0, 0, 0, 0)
+            RoundedRectangle:
+                pos: self.x + dp(4), self.y + dp(2)
+                size: self.width - dp(8), self.height - dp(4)
+                radius: [dp(14)]
+        Label:
+            font_name: 'MaterialIcons'
+            text: ''
+            font_size: sp(22)
+            color: (0.75, 0.77, 0.95, 1) if app.current_screen == 'home' else (0.42, 0.44, 0.56, 1)
+            halign: 'center'
+            valign: 'middle'
+            text_size: self.size
+            size_hint_y: 0.62
+        Label:
+            text: 'Home'
+            font_size: sp(10)
+            bold: app.current_screen == 'home'
+            color: (0.75, 0.77, 0.95, 1) if app.current_screen == 'home' else (0.42, 0.44, 0.56, 1)
+            halign: 'center'
+            size_hint_y: 0.38
+
+    # ── Analytics tab ─────────────────────────────────────────────────────────
+    NavButton:
+        orientation: 'vertical'
+        spacing: 0
+        padding: dp(4), dp(6), dp(4), dp(4)
+        on_release: app.go_to('analytics')
+        canvas.before:
+            Color:
+                rgba: (0.75, 0.77, 0.95, 0.12) if app.current_screen == 'analytics' else (0, 0, 0, 0)
+            RoundedRectangle:
+                pos: self.x + dp(4), self.y + dp(2)
+                size: self.width - dp(8), self.height - dp(4)
+                radius: [dp(14)]
+        Label:
+            font_name: 'MaterialIcons'
+            text: ''
+            font_size: sp(22)
+            color: (0.75, 0.77, 0.95, 1) if app.current_screen == 'analytics' else (0.42, 0.44, 0.56, 1)
+            halign: 'center'
+            valign: 'middle'
+            text_size: self.size
+            size_hint_y: 0.62
+        Label:
+            text: 'Analytics'
+            font_size: sp(10)
+            bold: app.current_screen == 'analytics'
+            color: (0.75, 0.77, 0.95, 1) if app.current_screen == 'analytics' else (0.42, 0.44, 0.56, 1)
+            halign: 'center'
+            size_hint_y: 0.38
+
+    # ── Calendar tab ──────────────────────────────────────────────────────────
+    NavButton:
+        orientation: 'vertical'
+        spacing: 0
+        padding: dp(4), dp(6), dp(4), dp(4)
+        on_release: app.go_to('calendar')
+        canvas.before:
+            Color:
+                rgba: (0.75, 0.77, 0.95, 0.12) if app.current_screen == 'calendar' else (0, 0, 0, 0)
+            RoundedRectangle:
+                pos: self.x + dp(4), self.y + dp(2)
+                size: self.width - dp(8), self.height - dp(4)
+                radius: [dp(14)]
+        Label:
+            font_name: 'MaterialIcons'
+            text: ''
+            font_size: sp(22)
+            color: (0.75, 0.77, 0.95, 1) if app.current_screen == 'calendar' else (0.42, 0.44, 0.56, 1)
+            halign: 'center'
+            valign: 'middle'
+            text_size: self.size
+            size_hint_y: 0.62
+        Label:
+            text: 'Calendar'
+            font_size: sp(10)
+            bold: app.current_screen == 'calendar'
+            color: (0.75, 0.77, 0.95, 1) if app.current_screen == 'calendar' else (0.42, 0.44, 0.56, 1)
+            halign: 'center'
+            size_hint_y: 0.38
+
+    # ── Goals tab ─────────────────────────────────────────────────────────────
+    NavButton:
+        orientation: 'vertical'
+        spacing: 0
+        padding: dp(4), dp(6), dp(4), dp(4)
+        on_release: app.go_to('goals')
+        canvas.before:
+            Color:
+                rgba: (0.75, 0.77, 0.95, 0.12) if app.current_screen == 'goals' else (0, 0, 0, 0)
+            RoundedRectangle:
+                pos: self.x + dp(4), self.y + dp(2)
+                size: self.width - dp(8), self.height - dp(4)
+                radius: [dp(14)]
+        Label:
+            font_name: 'MaterialIcons'
+            text: ''
+            font_size: sp(22)
+            color: (0.75, 0.77, 0.95, 1) if app.current_screen == 'goals' else (0.42, 0.44, 0.56, 1)
+            halign: 'center'
+            valign: 'middle'
+            text_size: self.size
+            size_hint_y: 0.62
+        Label:
+            text: 'Goals'
+            font_size: sp(10)
+            bold: app.current_screen == 'goals'
+            color: (0.75, 0.77, 0.95, 1) if app.current_screen == 'goals' else (0.42, 0.44, 0.56, 1)
+            halign: 'center'
+            size_hint_y: 0.38
+
+    # ── Settings tab ───────────────────────────────────────────────────────────────────
+    # MaterialIcons  (U+E8B8) = "settings" gear.
+    NavButton:
+        orientation: 'vertical'
+        spacing: 0
+        padding: dp(4), dp(6), dp(4), dp(4)
+        on_release: app.go_to('settings')
+        canvas.before:
+            Color:
+                rgba: (0.75, 0.77, 0.95, 0.12) if app.current_screen == 'settings' else (0, 0, 0, 0)
+            RoundedRectangle:
+                pos: self.x + dp(4), self.y + dp(2)
+                size: self.width - dp(8), self.height - dp(4)
+                radius: [dp(14)]
+        Label:
+            font_name: 'MaterialIcons'
+            text: ''
+            font_size: sp(22)
+            color: (0.75, 0.77, 0.95, 1) if app.current_screen == 'settings' else (0.42, 0.44, 0.56, 1)
+            halign: 'center'
+            valign: 'middle'
+            text_size: self.size
+            size_hint_y: 0.62
+        Label:
+            text: 'Settings'
+            font_size: sp(10)
+            bold: app.current_screen == 'settings'
+            color: (0.75, 0.77, 0.95, 1) if app.current_screen == 'settings' else (0.42, 0.44, 0.56, 1)
+            halign: 'center'
+            size_hint_y: 0.38
